@@ -1,0 +1,218 @@
+.tableContainer {
+  margin-bottom: 1rem;
+}
+
+.table {
+  border: solid 1px #999;
+  border-radius: 4px;
+  border-collapse: collapse;
+  outline: solid 1px #bbb; /* needed for same outline as th */
+  margin: 0 auto;
+}
+
+:global(.print-mode) .table {
+  margin: 0;
+}
+
+.thead {
+  position: sticky;
+  top: -1px;
+  border: solid 1px #999;
+}
+
+:global(.print-mode) .thead {
+  position: static;
+  top: auto;
+}
+
+.th {
+  background-color: rgba(200, 200, 200, 0.4);
+  padding: 0.4rem 0.4rem 0.2rem 0.4rem;
+  font-size: 0.8rem;
+  text-align: left;
+  vertical-align: bottom;
+  border: solid 1px #999;
+  outline: solid 1px #bbb; /* needed to have a border when thead in position:sticky mode in Firefox 147. might be bug or might be per-spec with collapsed borders. */
+}
+
+:global(.print-mode) .th {
+  padding-left: 0.2rem;
+  padding-right: 0.2rem;
+}
+
+.sortableTh {
+  position: relative;
+  padding-right: 1.8rem;
+}
+
+:global(.print-mode) .sortableTh {
+  padding-right: 0.2rem;
+}
+
+.sortButton {
+  box-sizing: border-box;
+  position: absolute;
+  cursor: pointer;
+  right: 0;
+  bottom: 0;
+  border: 0;
+  color: #444;
+  background-color: transparent;
+  padding: 0.2rem 0.3rem;
+}
+
+:global(.print-mode) .sortButton {
+  display: none;
+}
+
+.sortButton:hover,
+.sortButton:focus {
+  opacity: 1;
+  background-color: var(--interactive-box-toggle-selected-background-hover);
+}
+
+.sortButtonNotSorted {
+  opacity: 0.7;
+}
+
+.sortIcon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.td {
+  padding: 0.2rem 0.4rem;
+  font-size: 0.8rem;
+  border: solid 1px #aaa;
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+:global(.print-mode) .td.column1_1,
+:global(.print-mode) .th.column1_1 {
+  font-size: 0.8rem;
+}
+
+:global(.print-mode) .td.column1_2,
+:global(.print-mode) .th.column1_2 {
+  font-size: 0.8rem;
+}
+
+:global(.print-mode) .td.column1_3,
+:global(.print-mode) .th.column1_3 {
+  font-size: 0.8rem;
+}
+
+:global(.print-mode) .td.column1_4,
+:global(.print-mode) .th.column1_4 {
+  font-size: 0.8rem;
+}
+
+:global(.print-mode) .td.column1_5,
+:global(.print-mode) .th.column1_5 {
+  font-size: 0.8rem;
+}
+
+:global(.print-mode) .th.column1_6,
+:global(.print-mode) .td.column1_6 {
+  font-size: 0.8rem;
+}
+
+:global(.print-mode) .th.column1_7,
+:global(.print-mode) .td.column1_7 {
+  font-size: 0.8rem;
+  width: 0.8rem;
+}
+
+:global(.print-mode) .th.column1_8,
+:global(.print-mode) .td.column1_8 {
+  font-size: 0.8rem;
+  width: 0.8rem;
+}
+
+:global(.print-mode) .th.column1_9,
+:global(.print-mode) .td.column1_9 {
+  font-size: 0.8rem;
+  width: 0.8rem;
+}
+
+:global(.print-mode) .th.column1_10,
+:global(.print-mode) .td.column1_10 {
+  font-size: 0.75rem;
+  width: 0.75rem;
+}
+
+:global(.print-mode) .th.column1_11,
+:global(.print-mode) .td.column1_11 {
+  font-size: 0.7rem;
+  width: 0.7rem;
+}
+
+:global(.print-mode) .th.column1_12,
+:global(.print-mode) .td.column1_12 {
+  font-size: 0.65rem;
+  width: 0.65rem;
+}
+
+:global(.print-mode) .th.column1_13,
+:global(.print-mode) .td.column1_13 {
+  font-size: 0.6rem;
+  width: 0.6rem;
+}
+
+:global(.print-mode) .th.column1_14,
+:global(.print-mode) .td.column1_14 {
+  font-size: 0.55rem;
+  width: 0.55rem;
+}
+
+:global(.print-mode) .th.column1_15,
+:global(.print-mode) .td.column1_15 {
+  font-size: 0.5rem;
+  width: 0.5rem;
+}
+
+:global(.print-mode) .th.column1_16,
+:global(.print-mode) .td.column1_16 {
+  font-size: 0.45rem;
+  width: 0.45rem;
+}
+
+:global(.print-mode) .th.column1_17ish,
+:global(.print-mode) .td.column1_17ish {
+  font-size: 0.4rem;
+  width: 0.4rem;
+}
+
+.cellNumber {
+  text-align: right;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.cellSection {
+  font-weight: bold;
+}
+
+.expandButton {
+  cursor: pointer;
+  border: var(--interactive-box-border);
+  background-color: var(--interactive-box-background);
+  border: none;
+  padding: 0.2rem 0.4rem;
+}
+
+:global(.print-mode) .expandButton {
+  display: none;
+}
+
+.expandButton:hover,
+.expandButton:focus {
+  background-color: var(--interactive-box-toggle-selected-background-hover);
+}
+
+.expandButtonIcon {
+  font-size: 1rem;
+}
+
+.expandButtonIsExpandedIcon {
+  transform: rotate(90deg);
+}

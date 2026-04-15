@@ -1,0 +1,11 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+:global(.print-mode) .page {
+  min-height: auto;
+  justify-content: start;
+  display: static;
+}

@@ -1,0 +1,6 @@
+fastapi[standard]==0.115.11
+pandas>=2.2.3
+pydantic==2.8.2
+python-dotenv==1.0.1
+requests==2.32.3
+numpy-financial~=1.0.0

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Community Network Builder</title>
+    <style>
+      :root {
+        --page-padding-x: 1rem;
+        --row-top-border-color: #bbb;
+        --focus-background-color: #efe;
+        --focus-ring-color: #363;
+        --selected-toggle-button-color: #000;
+        --error-pale-color: #fee;
+        --error-color: #f00;
+        --interactive-box-border: solid 1px #ddd;
+        --interactive-box-background: #fff;
+        --interactive-box-toggle-selected-background: #ddd;
+        --interactive-box-toggle-selected-border: solid 1px #ccc;
+        --interactive-box-toggle-selected-background-hover: #ded;
+      }
+
+      @media (min-width: 1100px) {
+        :root {
+          --page-padding-x: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <script type="application/json" id="countries">
+      {{ countries | tojson }}
+    </script>
+    <script type="application/json" id="text">
+      {{ text | tojson }}
+    </script>
+    <script type="application/json" id="selected_language">
+      {{ selected_language | tojson }}
+    </script>
+    <script type="application/json" id="frequencies">
+      {{ frequencies | tojson }}
+    </script>
+    <script type="application/json" id="terrain">
+      {{ terrain | tojson }}
+    </script>
+    <script type="application/json" id="vegetation">
+      {{ vegetation | tojson }}
+    </script>
+    <script type="application/json" id="technologies">
+      {{ technologies | tojson }}
+    </script>
+    <script type="application/json" id="network_types">
+      {{ network_types | tojson }}
+    </script>
+    <script type="application/json" id="power_types">
+      {{ power_types | tojson }}
+    </script>
+    <script type="application/json" id="midhaul_data">
+      {{ midhaul_data | tojson }}
+    </script>
+    <script type="application/json" id="backhaul_data">
+      {{ backhaul_data | tojson }}
+    </script>
+    <script type="application/json" id="tower_data">
+      {{ tower_data | tojson }}
+    </script>
+    <script type="application/json" id="tech_data">
+      {{ tech_data | tojson }}
+    </script>
+    <script type="application/json" id="paf_facilities_charge">
+      {{ paf_facilities_charge | tojson }}
+    </script>
+
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

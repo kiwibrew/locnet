@@ -1,0 +1,34 @@
+.button {
+  padding: 16px;
+  background: var(--interactive-box-background);
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+  font-size: inherit;
+  text-align: left;
+  border: var(--interactive-box-border);
+}
+
+.button:hover,
+.button:focus {
+  background-color: var(--focus-background-color);
+}
+
+.children {
+  box-sizing: border-box;
+  padding: 0px;
+}
+
+.childrenWithButtonVisible {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.arrow {
+  vertical-align: sub;
+  margin-right: 0.8rem;
+}
+
+.arrowIsOpen {
+  transform: rotate(90deg);
+}

@@ -1,0 +1,33 @@
+.label {
+  font-weight: bold;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0.2rem 0.7rem 0.2rem 0.4rem;
+  border: solid 1px #aaa;
+  border-radius: 4px;
+  margin: 0.3rem 0.6rem;
+  white-space: nowrap;
+  background: #fff;
+}
+
+.label:hover,
+.label:focus {
+  background-color: var(--focus-background-color);
+}
+
+.label_selected {
+  color: var(--selected-toggle-button-color);
+  border: solid 1px var(--selected-toggle-button-color);
+}
+
+.input {
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 4px;
+  margin-right: 0.6rem;
+}
+
+.description {
+  font-size: 0.6rem;
+}

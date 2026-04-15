@@ -1,0 +1,9 @@
+.container {
+}
+
+.labelText {
+  font-weight: normal;
+  font-style: italic;
+  border-bottom: solid 1px #999;
+  padding: 1rem 0.5rem 0.2rem 0.5rem;
+}

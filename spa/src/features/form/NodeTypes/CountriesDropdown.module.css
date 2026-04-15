@@ -1,0 +1,15 @@
+.select {
+  font-size: inherit;
+  background-color: var(--interactive-box-background);
+  border: var(--interactive-box-border);
+  border-radius: 4px;
+  padding: 16px;
+  cursor: pointer;
+  display: block;
+  width: 100%;
+}
+
+.select:hover,
+.select:focus {
+  background-color: var(--focus-background-color);
+}

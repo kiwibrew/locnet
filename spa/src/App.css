@@ -1,0 +1,34 @@
+body {
+  overflow-y: scroll; /* force scrollbars to avoid layout wiggles when content exceeds viewport */
+}
+
+#root {
+  max-width: 1024px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.print-mode #root {
+  max-width: none;
+}
+
+#printing-message {
+  pointer-events: none;
+  position: fixed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(255, 255, 255, 0.5);
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+
+
+.print-mode #printing-message {
+   opacity: 1;
+}

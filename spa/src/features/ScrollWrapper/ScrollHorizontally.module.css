@@ -1,0 +1,35 @@
+.container {
+  max-width: 100vw;
+  overflow: hidden;
+  overflow-x: auto;
+  position: relative;
+  width: calc(100vw - var(--scrollbar-width));
+  left: 50%;
+  transform: translateX(-50vw);
+}
+
+:global(.print-mode) .container {
+  max-width: auto;
+  width: auto;
+  left: auto;
+  transform: none;
+  padding-left: 1rem;
+}
+
+.canScrollLeft {
+  box-shadow:
+    inset 20px 0px 20px -20px rgba(0, 45, 45, 0.5),
+    inset 20px 0px 20px -20px rgba(0, 45, 45, 0.5);
+}
+
+.canScrollRight {
+  box-shadow:
+    inset -20px 0px 20px -20px rgba(0, 45, 45, 0.5),
+    inset -20px 0px 20px -20px rgba(0, 45, 45, 0.5);
+}
+
+.canScrollBoth {
+  box-shadow:
+    inset 20px 0px 20px -20px rgba(0, 45, 45, 0.5),
+    inset -20px 0px 20px -20px rgba(0, 45, 45, 0.5);
+}

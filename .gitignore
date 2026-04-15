@@ -1,0 +1,9 @@
+tunnel.env
+__pycache__
+venv
+docker-compose.yml
+.env
+.DS_Store
+.idea
+cache
+static/confluence_images

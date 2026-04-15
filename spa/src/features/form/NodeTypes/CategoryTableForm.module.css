@@ -1,0 +1,10 @@
+.CategoryTableForm_table {
+  border-collapse: collapse;
+  margin: 0.5rem auto;
+  min-width: 600px;
+  max-width: 1024px;
+}
+
+.CategoryTableForm_tr {
+  border-top: solid 1px var(--row-top-border-color);
+}

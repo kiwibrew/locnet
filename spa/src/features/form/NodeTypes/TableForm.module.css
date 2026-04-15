@@ -1,0 +1,92 @@
+.TableFormRowHeader_td {
+  font-style: italic;
+  border-bottom: solid 1px #999;
+  padding: 1rem 0.5rem 0.2rem 0.5rem;
+}
+
+.TableFormRowCells_tr {
+  border-top: solid 1px var(--row-top-border-color);
+}
+
+.TableFormColumnText_th {
+  text-align: left;
+  padding: 0.2rem 0.5rem;
+}
+
+.TableFormCellInputNumber_inputContainer {
+  padding: 1px;
+  margin: 0.3em;
+  display: flex;
+  background: #fff;
+  align-items: end;
+  border: solid 1px #eee;
+  border-radius: 4px;
+}
+
+.TableFormCellInputNumber_inputContainer:focus-within {
+  outline: solid 1px var(--focus-ring-color);
+  background-color: var(--focus-background-color);
+}
+
+.TableFormCellInputNumber_inputContainer_error,
+.TableFormCellInputNumber_inputContainer_error:focus-within {
+  outline: solid 2px var(--error-color);
+  background-color: var(--error-pale-color);
+}
+
+.TableFormCellInputNumber_inputNumber {
+  font-family: 'Courier New', Courier, monospace;
+  width: 6em;
+  padding: 0.3em 0.6em 0.2em 0.6em;
+  font-size: inherit;
+  text-align: right;
+  border: none;
+  outline: none;
+  background-color: transparent;
+}
+
+.TableFormCellInputNumber_inputNumber:invalid {
+}
+
+.TableFormCellInputNumber_inputContainer_readOnly {
+  background-color: #ccc;
+  color: #333;
+}
+
+.TableFormCellInputNumber_inputNumber:focus,
+.TableFormCellInputNumber_inputNumber:hover {
+  outline: none;
+  border: none;
+}
+
+.TableFormCellInputNumber_inputNumber::-webkit-outer-spin-button,
+.TableFormCellInputNumber_inputNumber::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.TableFormCellInputNumber_inputNumber[type='number'] {
+  -moz-appearance: textfield;
+}
+
+.TableFormCellInputNumber_inputNumberUnit {
+  width: 5em;
+  white-space: nowrap;
+  padding: 0.3em 1em 0.3em 0;
+  font-weight: bold;
+  font-size: 0.8rem;
+}
+
+.TableFormCellText_td_paddingMedium {
+  padding: 0.2rem 1rem;
+}
+
+.TableFormCellText_td_paddingSmall {
+  padding: 0.2rem 0.5rem;
+}
+
+.TableFormCellText_td_textSizeSmall {
+  font-size: 0.8rem;
+}
+
+

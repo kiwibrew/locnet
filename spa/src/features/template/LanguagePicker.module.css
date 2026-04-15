@@ -1,0 +1,30 @@
+.container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: 0px; /* otherwise the globe look misaligned against <select> */
+}
+
+.label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.select {
+  background: var(--interactive-box-background);
+  border: var(--interactive-box-toggle-selected-border);
+  border-radius: 4px;
+  margin: 0 0 0 0.4em;
+  padding: 0.5rem 0.5rem;
+  cursor: pointer;
+}
+
+.select:focus,
+.select:hover {
+  background: var(--focus-background-color);
+}
+
+.globe {
+  margin-bottom: -3px; /* otherwise the globe look misaligned against <select> */
+}

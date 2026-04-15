@@ -1,0 +1,516 @@
+.networkLocationsIntro {
+  padding: 0.6rem 1rem 0.3rem 1rem;
+}
+
+.numberOfLocationsIntro {
+  padding: 0.3rem 1rem 0.6rem 1rem;
+}
+
+.networkCountBox {
+  font-weight: bold;
+  font-size: inherit;
+  color: inherit;
+  background: transparent;
+  border: none;
+  appearance: none;
+  display: inline;
+  text-align: center;
+  padding: 0.2em 0.4em;
+  margin-left: 1em;
+  border-radius: 4px;
+  width: 2em;
+}
+.networkCountBox::-webkit-outer-spin-button,
+.networkCountBox::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.networkCountBox[type='number'] {
+  -moz-appearance: textfield;
+}
+
+.networkCountBox:invalid {
+  outline: solid 2px var(--error-color);
+  background-color: var(--error-pale-color);
+}
+
+.validationBlock {
+  padding-left: 1rem;
+}
+
+.countBox {
+  font-weight: bold;
+  font-size: inherit;
+  color: inherit;
+  background: transparent;
+  border: none;
+  appearance: none;
+  display: inline;
+  text-align: center;
+  padding: 0.2em 0.4em;
+  margin-left: 1em;
+  border-radius: 4px;
+  width: 2em;
+}
+.countBox::-webkit-outer-spin-button,
+.countBox::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.countBox[type='number'] {
+  -moz-appearance: textfield;
+}
+
+.countBox:invalid {
+  outline: solid 2px var(--error-color);
+  background-color: var(--error-pale-color);
+}
+
+.locationContainer {
+  position: relative;
+  border: solid 1px #666;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  margin: 0.8rem 1rem;
+}
+
+.addContainer {
+  margin: 0.5rem;
+  padding: 1.2rem 0.5rem 1rem 0.5rem;
+  border-top: solid 1px #666;
+}
+
+.nameContainer {
+  display: block;
+  padding-top: 0.6rem;
+}
+
+.labelWidth {
+  display: inline-block;
+  width: 6rem;
+}
+
+.addButton {
+  padding: 0.5em 1em;
+  background-color: white;
+  cursor: pointer;
+  border: solid 1px #444;
+  border-radius: 4px;
+}
+
+.addButton:focus,
+.addButton:hover {
+  background-color: var(--focus-background-color);
+}
+
+.deleteNetworkLocationButton {
+  position: absolute;
+  right: 0;
+  top: 0;
+  padding: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: bold;
+  border: solid 1px transparent;
+  background-color: transparent;
+  cursor: pointer;
+}
+
+.deleteNetworkLocationButton:hover,
+.deleteNetworkLocationButton:focus {
+  background-color: var(--focus-background-color);
+  border: solid 1px black;
+}
+
+.locationTitle {
+  padding: 0;
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.locationNameInput {
+  font-size: 0.8rem;
+  font-weight: bold;
+  background-color: white;
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+}
+
+.locationNameInput:focus,
+.locationNameInput:hover {
+  background-color: var(--focus-background-color);
+}
+
+.locationNameInput:invalid {
+  outline: solid 2px var(--error-color);
+  background-color: var(--error-pale-color);
+}
+
+.networkTypesContainer {
+  margin-top: 0.6rem;
+  border-top: solid 1px #666;
+  padding-top: 0.6rem;
+}
+
+.networkTypesHeading {
+  margin: 0;
+  padding: 0;
+  font-weight: 200;
+  font-size: 1.4rem;
+}
+
+.networkTypesDescription {
+  padding-top: 0;
+  margin-top: 0;
+}
+
+.networkTypeContainer {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  margin-bottom: 0.6rem;
+}
+
+.networkTypeSelect {
+  font-size: inherit;
+  background-color: white;
+  font-weight: bold;
+  padding: 0.3em 0.6em 0.3em 0.6em;
+  border-radius: 4px;
+}
+
+.networkTypeSelect:hover,
+.networkTypeSelect:focus {
+  background-color: var(--focus-background-color);
+}
+
+.unitCountInput {
+  width: 5em;
+  padding: 0.3em 0.6em 0.3em 0.6em;
+  font-size: inherit;
+  text-align: right;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: bold;
+  margin-right: 0.5em;
+  border-radius: 4px;
+  background-color: white;
+}
+
+.unitCountInput:hover,
+.unitCountInput:focus {
+  background-color: var(--focus-background-color);
+}
+
+.unitCountInput::-webkit-outer-spin-button,
+.unitCountInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.unitCountInput[type='number'] {
+  -moz-appearance: textfield;
+}
+
+.unitCountInput_error {
+  outline: solid 2px red;
+}
+
+.networkTypeUnitContainer {
+  display: inline-block;
+  width: 5em;
+}
+
+.powerSystemContainer {
+  margin-top: 0.6rem;
+  border-top: solid 1px #666;
+  padding-top: 0.6rem;
+}
+
+.powerSystemHeading {
+  margin: 0;
+  padding: 0;
+  font-weight: 200;
+  font-size: 1.4rem;
+}
+
+.powerSystemDescription {
+  padding-top: 0;
+  margin-top: 0;
+}
+
+.powerSystemSelect {
+  font-size: 0.8rem;
+  background-color: white;
+  font-weight: bold;
+  padding: 0.3em 0.6em 0.3em 0.6em;
+  border-radius: 4px;
+  max-width: 100%;
+}
+
+.powerSystemSelect:hover,
+.powerSystemSelect:focus {
+  background-color: var(--focus-background-color);
+}
+
+.towerTypeContainer {
+  margin-top: 0.6rem;
+  border-top: solid 1px #666;
+  padding-top: 0.6rem;
+}
+
+.towerTypeHeading {
+  margin: 0;
+  padding: 0;
+  font-weight: 200;
+  font-size: 1.4rem;
+}
+
+.towerTypeDescription {
+  padding-top: 0;
+  margin-top: 0;
+}
+
+.deleteNetworkTypeButton {
+  background-color: transparent;
+  font-weight: bold;
+  padding: 0.3em 0.6em 0.3em 0.6em;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.deleteNetworkTypeButton:hover,
+.deleteNetworkTypeButton:focus {
+  background-color: var(--focus-background-color);
+}
+
+.towerTypeGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.towerTypeGridRow {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.towerTypeGridSelect {
+  font-size: inherit;
+  background-color: white;
+  font-weight: 400;
+  padding: 0.3em 0.6em 0.3em 0.6em;
+  border-radius: 4px;
+  margin: 0;
+}
+
+.towerTypeGridSelect:hover,
+.towerTypeGridSelect:focus {
+  background-color: var(--focus-background-color);
+}
+
+.towerTypeNumberAndUnitContainer {
+  display: flex;
+  gap: 0.2rem;
+  background: white;
+  border: solid 1px #666;
+  border-radius: 4px;
+  align-items: center;
+  overflow: hidden;
+}
+
+.towerTypeNumberAndUnitContainer:focus-within {
+  border-color: solid 1px #333;
+  background-color: var(--focus-background-color);
+}
+
+.towerTypeCostInputNumber {
+  width: 6em;
+  padding: 0.3em 0.6em 0.3em 0.6em;
+  font-size: inherit;
+  text-align: right;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: bold;
+  margin-right: 0.5em;
+  background-color: transparent;
+  border: none;
+  outline: none;
+}
+
+.towerTypeCostInputNumber:hover,
+.towerTypeCostInputNumber:focus {
+  outline: none;
+}
+
+.towerTypeCostInputNumber::-webkit-outer-spin-button,
+.towerTypeCostInputNumber::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.towerTypeCostInputNumber[type='number'] {
+  -moz-appearance: textfield;
+}
+
+.towerTypeCostInputNumberUnit {
+  text-align: left;
+  font-weight: bold;
+  font-size: 0.7rem;
+  padding-right: 0.3rem;
+}
+
+.towerConnectContainer {
+  margin-top: 0.6rem;
+  border-top: solid 1px #666;
+  padding-top: 0.6rem;
+}
+
+.towerConnectHeading {
+  margin: 0;
+  padding: 0;
+  font-weight: 200;
+  font-size: 1.4rem;
+}
+
+.towerConnectSmallHeading {
+  margin: 0;
+  padding: 0;
+  font-weight: 300;
+  font-size: 1.2rem;
+}
+
+.towerConnectDescription {
+  padding-top: 0;
+  margin-top: 0;
+}
+
+.networkLinkContainer {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+}
+
+.networkLinksContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.addNetworkLinkContainer {
+  margin-top: 0.6rem;
+  margin-bottom: 0.8rem;
+}
+
+.networkLinkSelect {
+  font-size: 0.8rem;
+  background-color: white;
+  font-weight: 400;
+  padding: 0.3em 0.6em 0.3em 0.6em;
+  border-radius: 4px;
+  margin: 0;
+}
+
+.networkLinkSelect:hover,
+.networkLinkSelect:focus {
+  background-color: var(--focus-background-color);
+}
+
+.deleteNetworkLinkButton {
+  padding: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: bold;
+  border: solid 1px transparent;
+  background-color: transparent;
+  cursor: pointer;
+}
+
+.deleteNetworkLinkButton:hover,
+.deleteNetworkLinkButton:focus {
+  background-color: var(--focus-background-color);
+  border: solid 1px black;
+}
+
+.addBackhaulLinkContainer {
+  margin-top: 0.6rem;
+  margin-bottom: 0.8rem;
+}
+
+.backhaulLinkSelect {
+  font-size: 0.8rem;
+  background-color: white;
+  font-weight: 400;
+  padding: 0.3em 0.6em 0.3em 0.6em;
+  border-radius: 4px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.backhaulLinkSelect:hover,
+.backhaulLinkSelect:focus {
+  background-color: var(--focus-background-color);
+}
+
+.deleteBackhaulLinkButton {
+  padding: 0.2rem 0.3rem;
+  font-size: 1.5rem;
+  font-weight: bold;
+  border: solid 1px transparent;
+  background-color: transparent;
+  cursor: pointer;
+}
+
+.deleteBackhaulLinkButton:hover,
+.deleteBackhaulLinkButton:focus {
+  background-color: var(--focus-background-color);
+  border: solid 1px black;
+}
+
+.backhaulLinksContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.backhaulLinkContainer {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.backhaulItemLabel {
+  font-size: 0.8rem;
+}
+
+.backhaulItemNumberInput {
+  font-size: 0.8rem;
+  background-color: white;
+  font-weight: bold;
+  padding: 0.3em 0.6em 0.3em 0.6em;
+  border-radius: 4px;
+  margin: 0 0 0 0.5rem;
+  text-align: right;
+  max-width: 6em;
+}
+
+.backhaulItemNumberInput:hover,
+.backhaulItemNumberInput:focus {
+  background-color: var(--focus-background-color);
+}
+
+.backhaulItemNumberInput::-webkit-outer-spin-button,
+.backhaulItemNumberInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.backhaulItemNumberInput[type='number'] {
+  -moz-appearance: textfield;
+}

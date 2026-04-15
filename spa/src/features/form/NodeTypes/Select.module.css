@@ -1,0 +1,63 @@
+.container {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  max-width: 600px;
+  gap: 0.5rem;
+}
+
+.label {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+@media (min-width: 750px) {
+  .label {
+    flex-direction: row;
+  }
+}
+
+.select {
+  width: 100%;
+  font-size: inherit;
+  font-weight: bold;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0.4rem 1rem 0.4rem 1rem;
+  border: var(--interactive-box-toggle-selected-border);
+  border-radius: 4px;
+  margin: 0.3rem 0rem;
+  white-space: nowrap;
+  background: var(--interactive-box-background);
+}
+
+.select:hover,
+.select:focus {
+  background-color: var(--focus-background-color);
+}
+
+.description {
+  font-size: 0.6rem;
+}
+
+.fieldHelpLabel {
+  align-self: center;
+}
+
+.fieldHelpCheckbox {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0.1;
+}
+
+.fieldHelpText {
+  font-size: 0.9rem;
+  border-left: solid 2px #ccc;
+  margin-left: 0.5rem;
+  padding-left: 1rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}

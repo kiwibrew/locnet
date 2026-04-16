@@ -1,0 +1,16 @@
+services:
+  web-locnet:
+    image: locnet:main
+    build:
+      dockerfile: ./Dockerfile
+    restart: always
+    container_name: web-locnet
+    develop:
+      watch:
+        - action: sync
+          path: ./spa/dist
+          target: /usr/src/app/spa/dist
+          ignore:
+            - spa/node_modules/
+    ports:
+      - "8000:8000"

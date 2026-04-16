@@ -164,7 +164,7 @@ export const RenderTableFormCellInputText = ({
 
   return (
     <td>
-      <input id={formPath} name={formPath} type="text" value={value} />
+      <input id={formPath} name={formPath} type="text" value={value} data-testid={node.labelIntlId} />
     </td>
   );
 };
@@ -371,6 +371,7 @@ export const RenderTableFormCellInputNumber = ({
           aria-describedby={node['aria-describedby']}
           aria-labelledby={node['aria-labelledby']}
           readOnly={node.isReadOnly}
+          data-testid={node.labelIntlId}
         />
         {node.unit && (
           <span className={styles.TableFormCellInputNumber_inputNumberUnit}>

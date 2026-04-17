@@ -88,6 +88,7 @@ export const RenderSelect = ({ node, formPath }: Props) => {
             value={value}
             aria-label={useIntlIdOrText(node.labelIntlId, node.labelText)}
             className={styles.select}
+            data-testid={node.labelIntlId}
           >
             {node.placeholderIntlId ||
               (node.placeholderText && <RenderPlaceholder {...node} />)}

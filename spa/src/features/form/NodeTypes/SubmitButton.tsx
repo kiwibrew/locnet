@@ -26,6 +26,7 @@ export const RenderSubmitButton = ({ node, formPath }: Props) => {
         disabled={isSubmitting}
         id={formPath}
         className={styles.submitButton}
+        data-testid={node.labelIntlId}
       >
         <Text intlId={node.labelIntlId} text={node.labelText} />
       </button>

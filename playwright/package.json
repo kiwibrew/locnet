@@ -1,0 +1,25 @@
+{
+  "name": "locnet-playwright",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "npm run test:types && npm run test:playwright",
+    "test:types": "tsc -b",
+    "test:types:debug": "tsc --jsx react-jsx --noEmit",
+    "test:playwright": "playwright test",
+    "test:playwright:ui": "playwright test --ui"
+  },
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "@types/node": "^25.6.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "vite": "^7.2.2"
+  }
+}

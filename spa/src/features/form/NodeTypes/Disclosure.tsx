@@ -98,6 +98,7 @@ export const RenderDisclosure = ({ node, formPath }: Props) => {
           className={styles.button}
           aria-pressed={isOpen}
           onClick={handleToggle}
+          data-testid={node.labelIntlId}
         >
           <TiChevronRight
             className={[styles.arrow, isOpen ? styles.arrowIsOpen : ''].join(

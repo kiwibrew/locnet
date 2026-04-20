@@ -1,7 +1,11 @@
 import { ApiClient, type BuilderInput } from './api-generated-client';
 import type { SubmitHandler } from '../form/useStaticFormTs';
 import type { EditableLocNetForm } from './formData';
-import { type EditableLocNetModel, type LocNetModel, type LocNetModelOmitLocations } from './model';
+import {
+  type EditableLocNetModel,
+  type LocNetModel,
+  type LocNetModelOmitLocations,
+} from './model';
 import { useCallback } from 'react';
 import { builderInputSchema } from './api-generated-zod';
 import { removeSoftDeletes } from '../form/softDeletes';
@@ -12,6 +16,12 @@ import {
 } from '../form/NodeTypes/NetworkElements.utils';
 import type { NetworkElement } from '../form/NodeTypes/NetworkElements';
 import { generateRandomKey } from '../form/key';
+
+declare global {
+  interface Window {
+    locnetBuilderInputToModel: (input: BuilderInput) => LocNetModel;
+  }
+}
 
 export const useLocNetServerSubmit = () => {
   const handleSubmit: SubmitHandler<EditableLocNetForm, EditableLocNetModel> =
@@ -80,7 +90,7 @@ export const locnetModelToBuilderInput = (
 };
 
 export const locnetBuilderInputToModel = (
-  locNetBuilderInput: BuilderInput
+  locNetBuilderInput: BuilderInput,
 ): LocNetModel => {
   return {
     ...(locNetBuilderInput satisfies LocNetModelOmitLocations),
@@ -119,6 +129,10 @@ export const locnetBuilderInputToModel = (
     ),
   };
 };
+
+if (typeof window !== 'undefined') {
+  (window as Window).locnetBuilderInputToModel = locnetBuilderInputToModel;
+}
 
 const networkElementToLocationData = (
   networkElement: NetworkElement,

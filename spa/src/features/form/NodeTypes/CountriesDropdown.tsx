@@ -58,6 +58,7 @@ export const RenderCountriesDropdown = ({ formPath, node }: Props) => {
       value={value}
       aria-label={labelText}
       className={styles.select}
+      data-testid={node.labelIntlId}
     >
       <option value="" disabled selected>
         {labelText}

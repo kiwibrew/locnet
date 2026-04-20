@@ -102,7 +102,7 @@ Contributing
 - Issues and pull requests are welcome. Please discuss major changes via an issue before submitting a PR.
 
 License
-- © 2024–2026 APC, SKC, Telco2 and contributors. See repository for licensing details or contact the maintainer.
+- © 2024–2026 APC, SKC, Telco2, ISOC and contributors. See repository's LICENSE file for details.
 
 Maintainer and support
 - For access to the menu/lookup API and general support, please contact the project maintainer.

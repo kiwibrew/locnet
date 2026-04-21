@@ -190,6 +190,7 @@ export const RenderNetworkElements = ({ node, formPath }: Props) => {
           return (
             <RenderNetworkLocation
               id={newId}
+              index={networkLocation.index}
               key={networkLocation.number}
               networkLocation={networkLocation}
               canDelete={canDelete}
@@ -198,7 +199,12 @@ export const RenderNetworkElements = ({ node, formPath }: Props) => {
           );
         })}
       <div className={styles.addContainer}>
-        <button type="button" onClick={handleAdd} className={styles.addButton}>
+        <button
+          type="button"
+          onClick={handleAdd}
+          className={styles.addButton}
+          data-testid="add_network_location"
+        >
           Add Network Location
         </button>
       </div>
@@ -212,6 +218,7 @@ type RenderNetworkLocationProps = {
   modelPath: ModelPath;
   networkLocation: NetworkElement;
   canDelete: boolean;
+  index: number;
 };
 
 const RenderNetworkLocation = ({
@@ -219,6 +226,7 @@ const RenderNetworkLocation = ({
   modelPath,
   networkLocation,
   canDelete,
+  index,
 }: RenderNetworkLocationProps) => {
   const { useFormAndModel } = useStaticFormTsContext();
   const isSoftDeletedId = `${id}.${
@@ -286,7 +294,11 @@ const RenderNetworkLocation = ({
   const customErrorRef = useCustomErrorRef(nameErrorPath);
 
   return (
-    <div className={styles.locationContainer} id={id}>
+    <div
+      className={styles.locationContainer}
+      id={id}
+      data-testid={`location-${index}`}
+    >
       {canDelete && (
         <button
           type="button"
@@ -309,25 +321,33 @@ const RenderNetworkLocation = ({
           value={name}
           onChange={handleEditName}
           className={styles.locationNameInput}
+          data-testid={`location-${index}-name`}
         />
       </label>
 
       <RenderNetworkTypes
         id={networkTypesId}
+        locationIndex={index}
         modelPath={networkTypesModelPath}
         defaultValue={networkLocation.networkTypes}
       />
 
       <RenderPowerSystem
         id={powerTypeId}
+        locationIndex={index}
         modelPath={powerTypeModelPath}
         defaultValue={networkLocation.power_type ?? undefined}
       />
 
-      <RenderTowerTypes id={towerTypeId} modelPath={towerTypeModelPath} />
+      <RenderTowerTypes
+        id={towerTypeId}
+        locationIndex={index}
+        modelPath={towerTypeModelPath}
+      />
 
       <RenderMidhaulAndBackhaul
         id={id}
+        locationIndex={index}
         modelPath={modelPath}
         networkLocation={networkLocation}
       />
@@ -339,10 +359,12 @@ type RenderNetworkTypesProps = {
   id: FormPath;
   modelPath: ModelPath;
   defaultValue: NetworkType[];
+  locationIndex: number;
 };
 
 const RenderNetworkTypes = ({
   id,
+  locationIndex,
   modelPath,
   defaultValue,
 }: RenderNetworkTypesProps) => {
@@ -379,6 +401,7 @@ const RenderNetworkTypes = ({
             <RenderNetworkType
               key={networkType.key}
               id={newId}
+              locationIndex={locationIndex}
               modelPath={newModelPath}
               networkType={networkType}
             />
@@ -389,6 +412,7 @@ const RenderNetworkTypes = ({
         type="button"
         onClick={handleAddNetworkType}
         className={styles.addButton}
+        data-testid={`location-${locationIndex}-add-network-type`}
       >
         <Text intlId="add" />
         {NBSP}
@@ -400,12 +424,14 @@ const RenderNetworkTypes = ({
 
 type RenderNetworkTypeProps = {
   id: FormPath;
+  locationIndex: number;
   modelPath: ModelPath;
   networkType: NetworkType;
 };
 
 const RenderNetworkType = ({
   id,
+  locationIndex,
   modelPath,
   networkType,
 }: RenderNetworkTypeProps) => {
@@ -584,6 +610,7 @@ const RenderNetworkType = ({
           value={typeValue}
           onChange={handleChangeType}
           className={styles.networkTypeSelect}
+          data-testid={`location-${locationIndex}-networktype-${networkType.index}-type`}
         >
           {options.length > 0 && (
             <option value="" disabled>
@@ -608,6 +635,7 @@ const RenderNetworkType = ({
           value={unitCount}
           onChange={handleChangeUnitCount}
           className={styles.unitCountInput}
+          data-testid={`location-${locationIndex}-networktype-${networkType.index}-unitCount`}
         />
 
         {selectedNetworkType && (
@@ -630,12 +658,14 @@ const RenderNetworkType = ({
 
 type RenderPowerSystemProps = {
   id: FormPath;
+  locationIndex: number;
   modelPath: ModelPath;
   defaultValue?: string;
 };
 
 const RenderPowerSystem = ({
   id,
+  locationIndex,
   modelPath,
   defaultValue,
 }: RenderPowerSystemProps) => {
@@ -670,6 +700,7 @@ const RenderPowerSystem = ({
         value={powerSystem}
         onChange={handlePowerTypeChange}
         className={styles.powerSystemSelect}
+        data-testid={`location-${locationIndex}-power_type`}
       >
         <option value="" disabled>
           <Text intlId="sel" />
@@ -691,10 +722,15 @@ const RenderPowerSystem = ({
 
 type RenderTowerTypesProps = {
   id: string;
+  locationIndex: number;
   modelPath: string;
 };
 
-const RenderTowerTypes = ({ id, modelPath }: RenderTowerTypesProps) => {
+const RenderTowerTypes = ({
+  id,
+  locationIndex,
+  modelPath,
+}: RenderTowerTypesProps) => {
   const { useFormAndModel } = useStaticFormTsContext();
   const towerTypeNameId = `${id}.${
     'name' satisfies keyof TowerType
@@ -770,6 +806,7 @@ const RenderTowerTypes = ({ id, modelPath }: RenderTowerTypesProps) => {
               className={styles.towerTypeGridSelect}
               onChange={handleTowerTypeChange}
               value={towerTypeName}
+              data-testid={`location-${locationIndex}-towerType`}
             >
               <option value="" disabled>
                 <Text intlId="sel" />
@@ -797,6 +834,7 @@ const RenderTowerTypes = ({ id, modelPath }: RenderTowerTypesProps) => {
                 className={styles.towerTypeCostInputNumber}
                 onChange={handleCostChange}
                 value={towerTypeCost_USD}
+                data-testid={`location-${locationIndex}-towerTypeCost_USD`}
               />
               <span
                 onClick={moveFocus}
@@ -814,12 +852,14 @@ const RenderTowerTypes = ({ id, modelPath }: RenderTowerTypesProps) => {
 
 type RenderMidhaulAndBackhaulProps = {
   id: FormPath;
+  locationIndex: number;
   modelPath: ModelPath;
   networkLocation: NetworkElement;
 };
 
 const RenderMidhaulAndBackhaul = ({
   id,
+  locationIndex,
   modelPath,
   networkLocation,
 }: RenderMidhaulAndBackhaulProps) => {
@@ -889,6 +929,7 @@ const RenderMidhaulAndBackhaul = ({
                   <RenderNetworkLink
                     key={networkLink.key}
                     id={newId}
+                    locationIndex={locationIndex}
                     networkLink={networkLink}
                     modelPath={newModelPath}
                   />
@@ -902,6 +943,7 @@ const RenderMidhaulAndBackhaul = ({
           type="button"
           onClick={handleAddNetworkLink}
           className={styles.addButton}
+          data-testid={`location-${locationIndex}-add_midhaul`}
         >
           <Text intlId="add" />
           {NBSP}
@@ -930,6 +972,7 @@ const RenderMidhaulAndBackhaul = ({
                   <RenderBackhaulLink
                     key={backhaulLink.key}
                     id={newId}
+                    locationIndex={locationIndex}
                     backhaulLink={backhaulLink}
                     modelPath={newModelPath}
                   />
@@ -944,6 +987,7 @@ const RenderMidhaulAndBackhaul = ({
           type="button"
           onClick={handleAddBackhaulLink}
           className={styles.addButton}
+          data-testid={`location-${locationIndex}-add_backhaul`}
         >
           <Text intlId="add" />
           {NBSP}
@@ -956,11 +1000,12 @@ const RenderMidhaulAndBackhaul = ({
 
 type RenderNetworkLinkProps = {
   id: string;
+  locationIndex: number;
   modelPath: string;
   networkLink: MidhaulLink;
 };
 
-const RenderNetworkLink = ({ id, modelPath }: RenderNetworkLinkProps) => {
+const RenderNetworkLink = ({ id, locationIndex, modelPath, networkLink }: RenderNetworkLinkProps) => {
   const { useFormAndModel } = useStaticFormTsContext();
   const typeId = `${id}.${'type' satisfies keyof MidhaulLink}` as FormPath;
   const typeModelPath = `${modelPath}.${
@@ -1000,6 +1045,7 @@ const RenderNetworkLink = ({ id, modelPath }: RenderNetworkLinkProps) => {
         value={typeValue}
         onChange={handleChangeType}
         className={styles.networkLinkSelect}
+        data-testid={`location-${locationIndex}-networklink-${networkLink.index}-type`}
       >
         <option value="" disabled>
           <Text intlId="sel" />
@@ -1027,12 +1073,14 @@ const RenderNetworkLink = ({ id, modelPath }: RenderNetworkLinkProps) => {
 
 type RenderBackhaulLinkProps = {
   id: FormPath;
+  locationIndex: number;
   modelPath: ModelPath;
   backhaulLink: BackhaulLink;
 };
 
 const RenderBackhaulLink = ({
   id,
+  locationIndex,
   modelPath,
   backhaulLink,
 }: RenderBackhaulLinkProps) => {
@@ -1134,6 +1182,7 @@ const RenderBackhaulLink = ({
         value={typeValue}
         onChange={handleChangeType}
         className={styles.backhaulLinkSelect}
+        data-testid={`location-${locationIndex}-backhaulLink-${backhaulLink.index}-type`}
       >
         <option value="" disabled>
           <Text intlId="sel" />
@@ -1158,6 +1207,7 @@ const RenderBackhaulLink = ({
             value={montlyCharge}
             className={styles.backhaulItemNumberInput}
             onChange={handleChargeChange}
+            data-testid={`location-${locationIndex}-backhaulLink-${backhaulLink.index}-monthlyCharge`}
           />
         </label>
       </div>
@@ -1171,6 +1221,7 @@ const RenderBackhaulLink = ({
             value={trafficCost_USD}
             className={styles.backhaulItemNumberInput}
             onChange={handleCostChange}
+            data-testid={`location-${locationIndex}-backhaulLink-${backhaulLink.index}-trafficCost_USD`}
           />
         </label>
       </div>

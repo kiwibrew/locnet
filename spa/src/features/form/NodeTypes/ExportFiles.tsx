@@ -42,7 +42,7 @@ export const RenderExportFiles = ({ node }: Props) => {
 
   return (
     <div className={styles.container}>
-      <h2 className={styles.labelText}>
+      <h2 className={styles.labelText} data-testid="report">
         <Text intlId={node.labelIntlId} text={node.labelText} />
       </h2>
       <div className={styles.buttonTray}>

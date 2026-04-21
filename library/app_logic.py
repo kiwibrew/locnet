@@ -66,34 +66,40 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
     traffic_growth_pct = traffic_growth / 100  # Defaults and user entries are for percent so we divide by 100
     system_life = input_data.system_life
     # Get the number of service providers and their users from user input
-    service_providers = float(input_data.service_providers)
+    service_providers = int(input_data.service_providers) if input_data.service_providers is not None else 0
     sp_users_avg = input_data.service_provider_users
-    sp_users = int(service_providers * sp_users_avg)
+    sp_users = int(service_providers * sp_users_avg) if sp_users_avg is not None else 0
     # Get the number of businesses and their users from user input
-    businesses = float(input_data.businesses)
+    businesses = int(input_data.businesses) if input_data.businesses is not None else 0
     bus_users_avg = input_data.business_users
-    bus_users = businesses * bus_users_avg
+    bus_users = int(businesses * bus_users_avg) if bus_users_avg is not None else 0
     # Get the total potential users
     potential_household_users = input_data.total_potential_users
     total_potential_users_all_types = int(potential_household_users + sp_users + bus_users)
     labour_cost = input_data.labour_cost
     terrain_type = input_data.terrain_type
     # default_tower_cost = input_data.tower_cost  # Defaults to 10,000 in the model in case it is not submitted
-    households = input_data.households_total  # Household Decision Makers
-    pop_growth_rate = input_data.pop_growth_rate / 100  # User Interface C11
-    hdm = households * ((1 + pop_growth_rate) ** 3) # Adjusted for population growth
-    # logging.info(f"Unadjusted Household Decision Makers: {hdm}")
+    households = int(input_data.households_total) if input_data.households_total is not None else 0  # Household Decision Makers
+    pop_growth_rate_input = input_data.pop_growth_rate if input_data.pop_growth_rate is not None else 0
+    pop_growth_rate = pop_growth_rate_input / 100  # User Interface C11
+    hdm = int(households * ((1 + pop_growth_rate) ** 3)) # Year 3 Household Decision Makers adjusted for pop growth
 
     # PAF parameters for use in supply model
     paf_hours_month_seat = 129  # Supply model considers 50% availability of 10 hours day, 6 days per week.
-    paf_sub_use = input_data.paf_sub_use  # User Interface C67
-    paf_non_sub_use = input_data.paf_non_sub_use
-    paf_deterred_use = input_data.paf_deterred_use  # User Interface C66
+    paf_sub_use = input_data.paf_sub_use if input_data.paf_sub_use is not None else 0
+    paf_non_sub_use = input_data.paf_non_sub_use if input_data.paf_non_sub_use is not None else 0
+    paf_deterred_use = input_data.paf_deterred_use if input_data.paf_deterred_use is not None else 0
     paf_gb_hour = input_data.paf_gb_hour  # User Interface C69
     paf_usd_hour = input_data.paf_usd_hour
     paf_use_pp = max(paf_sub_use, paf_non_sub_use, paf_deterred_use)
-    paf_users_per_seat = paf_hours_month_seat / paf_use_pp
-    paf_seat_demand_seats = paf_use_pp * potential_household_users / paf_hours_month_seat
+
+    if paf_use_pp > 0:
+        paf_users_per_seat = paf_hours_month_seat / paf_use_pp
+        paf_seat_demand_seats = paf_use_pp * potential_household_users / paf_hours_month_seat
+    else:
+        paf_users_per_seat = 0
+        paf_seat_demand_seats = 0
+
     logging.info(f"demand for paf seats is {round(paf_seat_demand_seats)}")
     logging.info(f"use pp is {paf_use_pp} and users per seat is {round(paf_users_per_seat)}")
 

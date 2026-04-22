@@ -52,7 +52,7 @@ const isNumberishValue = (input: unknown): input is string => {
   if (typeof input !== 'string') {
     return false;
   }
-  const inputAlphaNumeric = input.replace(/[^a-z0-9.]/gi, '');
+  const inputAlphaNumeric = input.replace(/[^a-z0-9.-]/gi, '');
   const inputNumberString = replaceNonNumberChars(inputAlphaNumeric);
   // we compare against inputAlphaNumeric so that input '$1' is treated as numbers
   const numberRatio = inputNumberString.length / inputAlphaNumeric.length;

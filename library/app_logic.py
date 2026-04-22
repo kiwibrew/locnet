@@ -728,47 +728,43 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
     # logging.info(f"Unadjusted number of service providers proposed is {service_providers} with {sp_users_avg}")
     # logging.info(f"Unadjusted number of businesses is {businesses} with {bus_users_avg} users each")
     # logging.info(f"Unadjusted Business users are {bus_users} and total users are {total_potential_users_all_types}")
-    # logging.info("First we find the ratio of businesss users to household users then we adjust number of businesses down")
-
-
-    supported_bus_users = 0
-    supported_household_users = 0
-    supported_businesses = 0
-    supported_households = 0
 
     # Priority 1: Service Provider Users
     # sp_users are first in line. We take the minimum of total supported or total SP users.
     supported_sp_users = min(solution_supported_users, sp_users)
+    # logging.info(f"Supported Service Provider Users is {supported_sp_users}")
+    supported_service_providers = math.floor(supported_sp_users/sp_users_avg)
+    # logging.info(f"Adjusted Service Providers is {service_providers}")
 
     # Remaining capacity for Business and Household users
     remaining_capacity = solution_supported_users - supported_sp_users
+    # logging.info(f"Remaining Capacity after assigning Service Provider Users is {remaining_capacity}")
+
+    # Priority 2: Business Users
+    # bus_users are second in line. We take the minimum of total supported or total BUS users.
 
     if remaining_capacity > 0 and (bus_users + potential_household_users) > 0:
-        # Calculate the ratio for proportional assignment
-        bus_ratio = bus_users / (bus_users + potential_household_users)
-        hh_ratio = potential_household_users / (bus_users + potential_household_users)
+        supported_bus_users = min(remaining_capacity,bus_users)
+        # logging.info(f"Supported Business Users is {supported_bus_users}")
+        remaining_capacity = solution_supported_users - supported_bus_users
+        # logging.info(f"Remaining Capacity after assigning Business Users is {remaining_capacity}")
+        # supported_household_users = remaining_capacity
+        # logging.info(f"Adjusted household users is {supported_household_users}")
 
-        supported_bus_users = remaining_capacity * bus_ratio
-        supported_household_users = remaining_capacity * hh_ratio
-
-        # Calculate whole units by rounding down
-        if bus_users_avg > 0:
-            supported_businesses = math.floor(supported_bus_users / bus_users_avg)
-
-        if hh_size > 0:
-            supported_households = math.floor(supported_household_users / hh_size)
     else:
+        logging.info("No capacity was left or no users were available, zeroing out household and business users ")
         supported_bus_users = 0
         supported_household_users = 0
-        supported_businesses = 0
-        supported_households = 0
 
+    supported_households = math.floor(supported_household_users/hh_size)
+    # Divide supported_household_users by users per household to get
+    # logging.info(f"Adjusted household decision makers is {supported_households}")
 
-    # logging.info(f"Adjusted household decision makers is {hdm}")
-    # logging.info(f"Adjusted household users is {supported_household_users}")
-    # logging.info(f"Adjusted business decision makers is {supported_businesses}")
-    # logging.info(f"Adjusted business users is {supported_bus_users}")
-    ndm = service_providers + supported_businesses + hdm  # Demand Modelling B20
+    # Divide supported_bus_users by number of businesses to get bdm
+    supported_businesses = math.floor(supported_bus_users/bus_users_avg)
+    # logging.info(f"Adjusted businesses makers is {businesses}")
+
+    ndm = supported_service_providers + supported_businesses + supported_households  # Demand Modelling B20
 
     # Connectivity capex per decision maker (Demand Modelling B7)
     ccpdm = cc * (1 - cocd) / ndm
@@ -797,7 +793,7 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
     # Number of decision makers for the CBA model ndm (Demand Modelling B14-B20)
     # region CBA NDM
     cba_ndm_oo = ndm  # Demand Modelling B20
-    cba_ndm_sp = service_providers  # Demand Modelling B14
+    cba_ndm_sp = supported_service_providers  # Demand Modelling B14
     cba_ndm_bus = supported_businesses  # Demand Modelling B15
     cba_ndm_hha = hdm / 2  # Demand Modelling B16
     cba_ndm_hhb = hdm / 2  # Demand Modelling B17

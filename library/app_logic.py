@@ -748,7 +748,7 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
         # logging.info(f"Supported Business Users is {supported_bus_users}")
         remaining_capacity = solution_supported_users - supported_bus_users
         # logging.info(f"Remaining Capacity after assigning Business Users is {remaining_capacity}")
-        # supported_household_users = remaining_capacity
+        supported_household_users = remaining_capacity
         # logging.info(f"Adjusted household users is {supported_household_users}")
 
     else:

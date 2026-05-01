@@ -67,7 +67,7 @@ An output section that summarises all of the main community, network, financial 
 
  Figure 1 below provides a high-level illustration of the model.
 
-![Model overview](Screenshot_2025-08-01_at_09.44.11.png)
+![Model overview](images/Screenshot_2025-08-01_at_09.44.11.png)
 The user of the model enters parameter values in the user interface that characterises the community and technology / business scenario being investigated. The model takes these values and passes them to the BTM which component estimates the number of users that can be supported, and the associated capital and operational costs, including power costs. These results are then passed to the BDM. The BDM combines the results from the BTM with other parameter values from the user interface. For example, the price of connectivity services is derived from the cost of providing the service (Capex and Opex), the number of expected users (in the different user categories) and the required operating margin.
 
 Using demand modelling parameters the BDM, in a sense ‘filters’ the results of the BTM by determining how many users will actually pay for the service, that is, become ‘adopters’ or ‘subscribers’, based on average incomes, willingness to pay and service price.
@@ -163,7 +163,7 @@ World Bank Open Data
 #### 2.3.1 Community characteristics
 Values for the Community characteristics parameters are shown below. The parameters have basic default values set, so if the model user is in doubt, the value can be left as-is. 
 
-![Community characteristics](locnet_community_chars.png)
+![Community characteristics](images/locnet_community_chars.png)
 Model users can input values for the coverage area in km2 required, the total number of households in the coverage area, the expected population growth rate, and the weekly household income. Since these values are community averages, fractional values are allowed, also, such as for Area, where many villages will be much smaller than 1sq km. The other parameters are self-explanatory.
 
 The value for total potential users, hidden in the Expert Options section, is derived from the number of households input in this section multiplied by the household size, minus the percent of non-users.
@@ -173,7 +173,7 @@ In the Additional User Types section, model users define the number of businesse
 #### 2.3.2 Technology Selection
 Technology choices are of paramount importance in building community broadband coverage. While a network may have several (or all) technologies, limiting the scope of the network limits the complexity a user is exposed to in the network builder section.
 
-![Technology selection](tech_freq_and_env.png)
+![Technology selection](images/tech_freq_and_env.png)
  
 
 ##### 2.3.2.1 Fixed Wireless
@@ -193,7 +193,7 @@ When a user selects PAF as a technology for use in the model, they’re prompted
 #### 2.3.3 Frequency Selection
 Builders of Fixed Wireless and Mobile networks might have access to dedicated radio spectrum. The frequency available has an impact on both coverage and solution cost. Wi-Fi bands that are universally available (or nearly so) are selected by default and cannot be unselected.
 
-![Frequency and environment](tech_freq_and_env.png)
+![Frequency and environment](images/tech_freq_and_env.png)
 Lower frequencies have greater coverage, especially in the presence of vegetation. The equipment is larger, more expensive, and uses more power than higher frequency equipment - and so has higher Capital and Operational expenses. Higher frequency equipment is physically smaller, and uses less power, but provides far less coverage in the presence of vegetation. 
 
 #### 2.3.4 Physical environment characteristics
@@ -379,13 +379,13 @@ All networks must have at least one location configured for delivering service. 
 #### 2.4.2 Add Network Type
 The first choice to make is that of a network type. When you click this button, you’ll get a pull-down menu allowing you to select from the available network types. If you don’t see a network option you’re expecting to use, go back and ensure you’ve selected the technology (2.3.2) and any required frequency (2.3.3). Then click the Add Network Type button again to regenerate the list. 
 
-![Network builder (add network type)](network_builder_a.png)
+![Network builder (add network type)](images/network_builder_a.png)
 For each radio network type at a location, you will also need to add a number of sectors or antennas. Most sectors technologies support between 64-128 simultaneous connections per antenna. For Public Access Facilities, you add the number of seats, or computers available. For GPON networks, you add a number of cards - each of which supports around 1,000 connections.
 
 #### 2.4.3 Choose a Power System and a Tower Type
 The terminology tower is an artefact of a previous version of the application that only supported radio technologies. For this variable, it’s most important to note the cost of the hosting arrangements. If it’s a building being used for a Public Access Facility that needs $5,000 USD of fit-out work, note that in the cost. 
 
-![Network builder (power system and tower type)](network_builder_b.png)
+![Network builder (power system and tower type)](images/network_builder_b.png)
  
 
 #### 2.4.4 Network Links
@@ -394,7 +394,7 @@ In community networks with more than one location, this version of the model req
 #### 2.4.5 Backhaul Links
 Backhaul, power, and staff costs are the main operational expenses of any network. Ensuring that backhaul charges are accurately estimated is important if the model is to be relevant and useful.
 
-![Network builder (backhaul links)](network_builder_c.png)
+![Network builder (backhaul links)](images/network_builder_c.png)
 Backhaul must be added to at least one location in a network. A method should be chosen, a fixed monthly charge entered, and a cost per Mbps for traffic. The model assumes that cost of backhaul will increase over time with traffic demand, based on the USD cost of traffic per Mbps entered here. 
 
 For each location, the model looks at provisioned backhaul to find how many will be supported in the network’s final year of operation. Then it creates a list that will hold details of the OpEx charges per Mbps that that will accrue for each user assigned to the backhaul. This is calculated based on the  average monthly use of a user during the peak hour over each year of service operation.
@@ -410,7 +410,7 @@ Once it’s run a set of results will appear below, and all user input will coll
 #### 3.1.1 Summary of Outcomes
 The first section of output, a table displayed once the model is run, is a summary of outcomes described in greater detail in sections below.
 
-![Summary of outcomes](summary_of_outcomes.png)
+![Summary of outcomes](images/summary_of_outcomes.png)
 ##### 3.1.1.1 Solution Capex per potential user
 This is the total solution capital expenditure over the life of the project, including rates of return, divided by the total number of decision makers, that is, the sum of households, service providers and businesses.
 
@@ -470,29 +470,29 @@ For businesses we assume that adoption will be equal to the adoption level of ho
 ### 3.2 Demand and Community Benefit Assessment
 The Demand and Community Benefit Assessment (CBA) table shows the expected impacts of the network at the end of its third year of operation. 
 
-![Demand and community benefit assessment](demand_and_cba_assessment.png)
+![Demand and community benefit assessment](images/demand_and_cba_assessment.png)
 Community benefits are explored in detail in section 4.7.
 
 ### 3.3 Profit and Loss Statement
 The Profit and Loss Statement provides a forecast of how a network operator could perform given the technical solution configured and the community being serviced. It draws on the demand model and predicts ultimate demand will ramp up from network launch and will eventually be met by the end of the third year of operation.
 
-![Profit and loss statement](profit_and_loss_statement.png)
+![Profit and loss statement](images/profit_and_loss_statement.png)
 ### 3.4 Investment and Operating Cash Flow Statement
 The Investment and Operating Cash Flow statement is an alternative view of many elements of the Profit and Loss Statement, with a focus on cash flow. It makes clear network build requirements (Construction Spend), and how and when that initial cash deficit might be recovered.
 
-![Investment and operating cash flow](investment_and_cashflow.png)
+![Investment and operating cash flow](images/investment_and_cashflow.png)
 ### 3.5 Demand Curve
 A demand curve is a representation (mathematical or graphical) of the relationship between the price of a good or service in a market and the quantity demanded by consumers. The demand curve used in the model, explained in detail in section 4 of the documentation, is represented here.
 
-![Demand curve (screenshot)](Screenshot_2025-08-06_at_21.11.53.png)
+![Demand curve (screenshot)](images/Screenshot_2025-08-06_at_21.11.53.png)
 ### 3.6 Network Details
 This table re-states some model parameters, and summarises some key facts about the complete network, including some traffic statistics and a breakdown of costs for elements of the network.
 
-![Network details](network_details.png)
+![Network details](images/network_details.png)
 ### 3.7 Network Elements
 The final set of results is a detailed breakdown of each location of the technical solution. Initially presented as a summary table, each location can be expanded by clicking an icon in the first column of each row, to show detailed information on how coverage is provided from a technical perspective.
 
-![Network elements](network_elements.png)
+![Network elements](images/network_elements.png)
  
 
 ## 4 The Broadband Demand Module
@@ -512,7 +512,7 @@ Since the demand curve shows the level of adoption as a function of the price of
 
 The demand curve illustrated, for example, indicates that, if the user charge for a broadband service is 5% of median income, the level of adoption will be slightly below 40% of the potential user population. Lower prices result in higher adoption levels and vice versa.
 
-![Demand curve diagram](image-20250806-093857.png)
+![Demand curve diagram](images/image-20250806-093857.png)
  
 
 It can easily be seen that the position and shape of the demand curve will significantly influence the relationship between price and adoption levels. For example, if the demand curve were to shift up, any given price would be associated with a higher level of adoption.
@@ -531,9 +531,7 @@ Consumer surplus is described diagrammatically as the area under the demand curv
 
 It may be useful to distinguish more clearly economic benefits and social benefits. The community’s total economic benefits are equal to the sum of all consumer surplus for all users – community economic benefit is the sum of individual economic benefits or the sum of all consumer surpluses. [1] There may be, in addition to these private benefits, social benefits. In economic terms these are described as positive externalities and may take the form of cost savings in the provision of education and health services. Users may become a subscribers, in part, because of better access to health and education services. But as more people do this, the cost of providing these services may fall, enabling better quality services for the same cost. This is an example of an ‘external benefit’. It is external to the decision making of the individual users, but it results in a collective or social benefit.   
 
-![Consumer surplus diagram](image-20250806-093954.png)
- 
-
+![Consumer surplus diagram](images/image-20250806-093954.png)
  
 
 ### 4.3 General characteristics of internet services
@@ -705,7 +703,5 @@ Treasury Board of Canada Benefit Cost Analysis Guide, , http://www.tbs-sct.gc.ca
 
 U.S. Environmental Protection Agency (2000), Guidelines for Preparing Economic Analyses, http://yosemite.epa.gov/ee/epa/eermfile.nsf/vwAN/EE-0228C-01.pdf/$File/EE-0228C-01.pdf
 
- 
-
-[1]                The affordability of ICT services 2022,ITU Policy Brief, https://www.itu.int/en/ITU-D/Statistics/Documents/publications/prices2022/ITU_Price_Brief_2022.pdf accessed 01/07/2024
+The affordability of ICT services 2022,ITU Policy Brief, https://www.itu.int/en/ITU-D/Statistics/Documents/publications/prices2022/ITU_Price_Brief_2022.pdf accessed 01/07/2024
 

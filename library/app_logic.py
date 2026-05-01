@@ -211,8 +211,9 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
                 logging.info("MIR for Mobile")
                 active_fraction = 0.05
                 active_users = users_sector * active_fraction
-                user_mir = round((sector_mbps / active_users), 1)
-                logging.info(f"MIR for Mobile calculated as {user_mir}")
+                active_users = max(active_users, 1)
+                user_mir_calc = sector_mbps / active_users
+                user_mir = round(min(user_mir_calc, sector_mbps), 1)
             elif tech["technology"] == "GPON":
                 logging.info("MIR for GPON")
                 active_fraction = 0.05
@@ -590,7 +591,8 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
     opex_ftes_fixed = input_data.staff_opex_fixed  # User Interface C31
     opex_ftes_variable = input_data.staff_opex_variable  # User Interface C31
     opex_other = input_data.other_opex / 100  # User Interface C33
-    debt_prop = input_data.debt_proportion / 100  # User Interface C26
+    debt_amount = max(system_capex - capex_cash_subsidy, 0)
+    debt_prop = debt_amount / system_capex if system_capex > 0 else 0
     fin_cos = input_data.finance_cost / 100  # Interest Rate or Finance Cost User Interface C34
     tax_rate = input_data.corp_tax / 100  # Corporate tax rate User Interface C36
     oc_margin = input_data.oc_margin / 100 # Margin on Operating Cost User Interface C37
@@ -1703,13 +1705,6 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
         cba_sur_ratio_bus = cba_sur_ratio_hha
         cba_sur_ratio_paf = 0 if cba_aup_paf == 0 else cba_sur_ratio_hhb
 
-    cba_sur_ratio_sub = (
-            cba_sur_ratio_sp +
-            cba_sur_ratio_bus +
-            cba_sur_ratio_hha +
-            cba_sur_ratio_hhb
-    )
-
     cba_sur_ratio_oo = (
         (cba_sur_ratio_bus * cba_aup_bus +
          cba_sur_ratio_hha * cba_aup_hha +
@@ -1840,7 +1835,7 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
             "cba_dem": cba_dem_sub,
             "cba_dgbm": cba_dgbm_sub,
             "cba_aup": cba_aup_sub,
-            "cba_sur_ratio": cba_sur_ratio_sub,
+            "cba_sur_ratio": None,
             "cba_sur": cba_sur_sub,
             "cba_soc": None,
             "cba_tacb": cba_tacb_sub
@@ -2266,8 +2261,8 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
         {"label": "Average Annual operator revenue (US$)", "Value": f"${pl_cli_rev_avg:,.0f}"},
         {"label": "Average Annual subsidy payment (US$)", "Value": f"${pl_cli_sub_avg:,.0f}"},
         {"label": "Average Annual costs (US$)", "Value": f"${pl_tot_op_cos_avg:,.0f}"},
-        {"label": "Average Annual EBIDTA (US$)", "Value": f"${pl_op_profit_avg:,.0f}"},
-        {"label": "Average Annual EBIT (US$)", "Value": f"${pl_ebt_avg:,.0f}"},
+        {"label": "Average Annual operating profit (EBITDA) (US$)", "Value": f"${pl_op_profit_avg:,.0f}"},
+        {"label": "Average Annual EBT (US$)", "Value": f"${pl_ebt_avg:,.0f}"},
         {"label": "Financial Return on Investment (IRR of CashFlows)", "Value": f"{cf_irr:.2%}"},
         {"label": "Average annual social benefit (US$)", "Value": f"${soc_ben_avg:,.0f}"},
         {"label": "Population geographic coverage", "Value": f"{total_potential_users_all_types:,}"},

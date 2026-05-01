@@ -443,7 +443,7 @@ This is the Earnings Before Interest and Taxes over the life of the solution div
 This is the Internal Rate of Return on a cash flow basis over the life of the solution.
 
 ##### 3.1.1.12 Average annual social benefit (US$)
-This is the total social benefit of the solution divided by the life of the solution. Note, at this stage the social value of the solution is rudimentary and indicative and supported by empirical evidence. It is a feature of the model that can be sued when the appropriate data becomes available.
+This is the total social benefit of the solution divided by the life of the solution. Note, at this stage the social value of the solution is rudimentary and indicative and supported by empirical evidence. It is a feature of the model that can be used when the appropriate data becomes available.
 
 ##### 3.1.1.13 Population geographic coverage
 This is the number of individuals in the community that are within the geographic coverage of the solution.

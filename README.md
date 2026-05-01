@@ -1,12 +1,12 @@
-Community Network Builder
+# Community Network Builder
 
-Overview
+## Overview
 - The Community Network Builder helps you estimate and understand the cost of building and operating a community network anywhere in the world.
 - Users can select the frequencies available in their context or proceed with the default ISM bands of 2.4GHz and 5.8GHz, which are widely available globally.
 - You can model mobile or Wi‑Fi networks, fixed wireless, fibre‑to‑the‑home, public access facilities, or any combination of these. The application guides users in describing terrain and vegetation conditions that may impact network deployment, particularly for radio frequency networks.
 - After specifying the population and area to be covered, users can design the network step by step, adding locations and technologies incrementally. The application provides helpful hints throughout this process, including suggested costs for network elements and traffic, which can easily be adjusted. For advanced control, the Expert Options menu allows users to fine‑tune details such as labour costs and electricity prices for their specific market.
 
-Background and credits
+## Background and credits
 - The Association for Progressive Communications (APC) commissioned Systems Knowledge Concepts (SKC) and Telco2 to develop a quantitative economic and financial model to enable the evaluation of the financial sustainability of different community‑based communications solutions in under‑serviced communities.
 - Systems Knowledge Concepts is an Australian economics consultancy specialising in telecommunications and economic development. Telco2 designs and builds innovative networks for broadband, public safety, utilities, and the Internet of Things.
 - Simon Molloy and Barry Burgan of SKC worked with Jonathan Brewer of Telco2 to develop and integrate the model into an Excel sheet. This team collaborated with Carlos Rey‑Moreno and Mike Jensen of APC on the work in 2024.
@@ -15,8 +15,8 @@ Background and credits
 - An advisory committee accompanied this process: Jane Coffin, Revi Sterling, Laina Green, Steve Song, Ben Matranga and representatives of Connect Humanity (initially Jochai Ben‑Avie, and later Erica Mesker, Brian Vo and Nathalia Foditsch).
 - The development of this application is part of the Local Networks initiative, a collective effort led by APC and Rhizomatica in partnership with grassroots communities and support organisations in Africa, Asia and Latin America and the Caribbean. Its production was supported by the "Meaningful community‑centred connectivity" project implemented with financial support from the Swedish International Development Cooperation Agency (Sida) and UK International Development from the UK Government through its Digital Access Programme. The views expressed here do not necessarily reflect the supporters' views.
 
-Technologies in use
-Backend
+## Technologies in use
+### Backend
 - FastAPI (Python) for the web API and server‑rendered endpoints
 - Pydantic v2 for request/response models and validation
 - Pandas for data handling and tabular computations
@@ -25,15 +25,15 @@ Backend
 - python‑dotenv for environment configuration
 - Jinja2 templates (via FastAPI) for server‑rendered pages
 
-Frontend (SPA)
+### Frontend (SPA)
 - React + TypeScript (see `spa/src/...` with `.tsx` files)
 - Vite build pipeline producing static assets in `spa/dist` served by FastAPI at `/assets`
 
-Data and integrations
+## Data and integrations
 - Menu and lookup data are provided by a remote database accessible via API (see Environment and configuration). The application depends on this API connection to populate its menus.
 - Documentation/QSG content is fetched from Confluence at runtime and rendered into `/documentation` and `/qsg` respectively.
 
-Architecture at a glance
+## Architecture at a glance
 - Single repo with a Python FastAPI backend and a static SPA frontend.
 - Backend mounts static directories and serves:
   - `/` — SPA entry (prebuilt assets in `spa/dist`)
@@ -42,13 +42,13 @@ Architecture at a glance
   - `/documentation` — User documentation (fetched from Confluence)
   - Additional JSON API routes under `/api/*` for lookups and modelling.
 
-Getting started
+## Getting started
 Prerequisites
 - Python 3.11+
 - Node.js 18+ (only needed if you will modify/build the SPA)
 - Docker (optional) if you prefer containerised runs
 
-Environment and configuration
+## Environment and configuration
 - The application depends on an API connection to a database holding all of its menus — please contact the maintainer to set up an API key for read access to that data.
 - Copy `locnet.env` (or `.env` template) and provide values for required variables. At minimum you will need read access credentials for the menu/lookup API. If using Confluence‑backed docs/QSG, provide the relevant credentials and page IDs.
 
@@ -94,15 +94,15 @@ Production docs and quick start
 - Quick Start Guide: https://locnet.io/qsg
 - Documentation: https://locnet.io/documentation
 
-API usage
+## API usage
 - The application exposes a JSON API used by the SPA and available for direct integration.
 - OpenAPI/Swagger UI is available at `/docs` when the server is running, including schema and example requests.
 
-Contributing
+## Contributing
 - Issues and pull requests are welcome. Please discuss major changes via an issue before submitting a PR.
 
-License
+## License
 - © 2024–2026 APC, SKC, Telco2, ISOC and contributors. See repository's LICENSE file for details.
 
-Maintainer and support
+## Maintainer and support
 - For access to the menu/lookup API and general support, please contact the project maintainer.

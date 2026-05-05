@@ -92,16 +92,16 @@ class LocationData(BaseModel):
     sectors: List[int]
     network_links: List[str]
     backhaul_links: List[str]
-    backhaul_cost_base: Optional[List[float]]
-    backhaul_cost_mbps: Optional[List[float]]
-    power_type: Optional[str] = Field(default="power_mains_rel")
+    backhaul_cost_base: List[float]
+    backhaul_cost_mbps: List[float]
+    power_type: str
 
 
 class BuilderInput(BaseModel):
     area_sqkm: float
     battery_age_derating: float
     battery_cost_watt_hour: float
-    battery_dod: Optional[float] = Field(default=80)
+    battery_dod: float
     charger_inverter_base: float
     charger_inverter_variable: float
     iso_3: str
@@ -110,9 +110,9 @@ class BuilderInput(BaseModel):
     locations: List['LocationData']
     mains_power_cost_kwh: float
     mains_power_installation_cost: float
-    power_hybrid_hours: Optional[int] = Field(default=24)
-    power_intermittent_hours: Optional[int] = Field(default=48)
-    power_reliable_hours: Optional[int] = Field(default=8)
+    power_hybrid_hours: int
+    power_intermittent_hours: int
+    power_reliable_hours: int
     solar_cost_watt: float
     solar_derating: float
     solar_efficiency: int
@@ -128,25 +128,25 @@ class BuilderInput(BaseModel):
     households_total: Optional[int] = Field(default=100)
     hh_size: Optional[float] = Field(default=3)
     pop_growth_rate: Optional[float] = Field(default=0.3)
-    hh_income_week: Optional[float] = Field(default=425.6)
+    hh_income_week: float
     businesses: Optional[int] = Field(default=1)
     business_users: Optional[float] = Field(default=2)
     service_providers: Optional[int] = Field(default=1)
     service_provider_users: Optional[float] = Field(default=2)
-    staff_opex_fixed: Optional[float] = Field(default=1.25)
-    staff_opex_variable: Optional[float] = Field(default=0.25)
+    staff_opex_fixed: float
+    staff_opex_variable: float
     maintenance_opex: Optional[float] = Field(default=2)
     capex_subsidy: Optional[float] = Field(default=20)
     opex_subsidy: Optional[float] = Field(default=20)
     ue_subsidy: Optional[float] = Field(default=0)
     finance_cost: Optional[float] = Field(default=5)
     debt_proportion: Optional[float] = Field(default=50)
-    wacc: Optional[float] = Field(default=6)
+    wacc: float
     corp_tax: Optional[float] = Field(default=0)
-    spectrum_licence_fee: Optional[float] = Field(default=0)
+    spectrum_licence_fee: float
     other_opex: Optional[float] = Field(default=7.5)
     oc_margin: Optional[float] = Field(default=15)
-    community_capex_discount: Optional[float] = Field(default=20)
+    community_capex_discount: float
     paf_deterred_use: Optional[float] = Field(default=0)
     paf_sub_use: Optional[float] = Field(default=0)
     paf_non_sub_use: Optional[float] = Field(default=0)
@@ -154,7 +154,7 @@ class BuilderInput(BaseModel):
     paf_facilities_charge: Optional[float] = Field(default=0.5)
     paf_usd_hour: Optional[float] = Field(default=2.128)
     ue_cost: Optional[float] = Field(default=100)
-    inflation: Optional[float] = Field(default=2.5)
+    inflation: float
     power_offgrid_hours: Optional[float] = Field(default=96)
     provider_type: Optional[str] = Field(default="provider_community")
     existing_ue_above_med: Optional[float] = Field(default=.30)

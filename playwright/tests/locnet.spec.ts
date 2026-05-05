@@ -76,7 +76,7 @@ const builderInput: BuilderInput = {
 };
 
 test("can load sample data and generate output", async ({ page }) => {
-  await page.goto("http://localhost:8000");
+  await page.goto("");
 
   const locnetModel = await page.evaluate(async (builderInput) => {
     // The page has a global on `window` to facilitate the conversion

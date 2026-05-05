@@ -4,7 +4,7 @@ import numpy_financial as npf
 import numpy as np
 import pandas as pd
 from fastapi import HTTPException
-from library.helpers import (get_tech_data, get_terrain, get_vegetation, get_backhaul, get_midhaul, fetch_grist_data,
+from library.helpers import (get_tech_data, get_terrain, get_vegetation, get_backhaul, get_midhaul,
                              get_centroid, demand_curve, build_keyed_row, get_country_ids)
 from library.bpo import (get_pl_lab_cos_by_year,
                          get_pl_oth_sys_op_cos_by_year,
@@ -19,7 +19,7 @@ from library.bpo import (get_pl_lab_cos_by_year,
                          get_cf_net_by_year, get_cf_cum_by_year,
                          build_inv_row)
 from library.supply import assign_users, apply_cpe_costs, solar_model
-from library.classes import BuilderInput, BuilderOutput, ModelerOutput, SolarModelInput
+from library.classes import BuilderInput, ModelerOutput, SolarModelInput
 from math import pi, log10, ceil, sqrt
 
 
@@ -598,7 +598,6 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
     oc_margin = input_data.oc_margin / 100 # Margin on Operating Cost User Interface C37
     hh_income_week = input_data.hh_income_week
     spectrum_fee = input_data.spectrum_licence_fee
-    power_opex = int(round(solar_results["power_opex"]))
     ue_subsidy = input_data.ue_subsidy / 100
     ue_cost = input_data.ue_cost
     ue_exist_hha = input_data.existing_ue_above_med / 100
@@ -851,7 +850,7 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
     # Other OCCB Annual occb_other_a (Demand Modelling Q29)
     occb_other_a = occb_other_m * 12
     # Spectrum OCCB Monthly occb_spectrum_m (Demand Modelling P30)
-    monthly_payment = npf.pmt(monthly_rate, months, -spectrum_fee)
+    monthly_payment = npf.pmt(monthly_rate, months, - spectrum_fee)
     occb_spectrum_m = monthly_payment / ndm
     # Spectrum OCCB Annual occb_spectrum_a (Demand Modelling Q30)
     occb_spectrum_a = occb_spectrum_m * 12
@@ -1164,7 +1163,6 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
     cvac_a_pen = 1
     cvac_hha_pen = min(math.exp((cba_moec_hha / (hh_income_week * 4 * 1.5) - dc_parameter_a) / -dc_parameter_b),
                        0.95)  # X28
-    cvac_b_pen = cvac_hha_pen  # copied value
     cvac_hhb_pen = min(math.exp((cba_moec_hhb / (hh_income_week * 4 * 0.75) - dc_parameter_a) / -dc_parameter_b),
                        0.95)  # x29
 
@@ -1416,7 +1414,6 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
         cvac_a_pen = 1
         cvac_hha_pen = min(math.exp((cba_moec_hha / (hh_income_week * 4 * 1.5) - dc_parameter_a) / -dc_parameter_b),
                            0.95)  # X28
-        cvac_b_pen = cvac_hha_pen  # copied value
         cvac_hhb_pen = min(math.exp((cba_moec_hhb / (hh_income_week * 4 * 0.75) - dc_parameter_a) / -dc_parameter_b),
                            0.95)  # x29
 
@@ -2240,7 +2237,6 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
         avg_cost_dm_m =  (pa_capex_per_decision_maker + pa_ps_capex_per_decision_maker + pa_cba_moec_sub)/12
         outcomes_table_rows.extend([
             {"label": "Solution Capex per potential decision maker (ex PAF)", "Value": f"${scpdm:,.2f}"},
-            {"label": "Annualized Solution Capex per decision maker", "Value": f"${pa_capex_per_decision_maker:,.2f}"},
             {"label": "Power cost (annual per decision maker)", "Value": f"${pa_ps_capex_per_decision_maker:,.2f}"},
             {"label": "Annual Operating cost per decision maker (ex PAF)", "Value": f"${pa_cba_moec_sub:,.2f}"},
             {"label": "Monthly average cost of service per decision maker", "Value": f"${avg_cost_dm_m:,.2f}"}
@@ -2415,12 +2411,10 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
         "labour_cost": labour_cost,
         "lang": input_data.lang,
         "country_name": country_name,
-        "lowest_power_system_type": solar_results["lowest_cost_system_type"],
         "mains_power_cost_kwh": mains_power_cost_kwh,
         "mains_power_installation_cost": mains_power_installation_cost,
         "midhaul_available": total_midhaul_available,
         "midhaul_cost": midhaul_capex,  # Midhaul doesn't have an OpEx component handled separately
-        "off_grid_system_cost": int(round(solar_results["off_grid_cost"])),
         "population_covered": total_population_covered,
         "power_capex": int(round(power_capex)),
         "power_hybrid_hours": power_hybrid_hours,

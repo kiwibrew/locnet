@@ -53,6 +53,18 @@ async def modeler_api(input_data: BuilderInput = Body(
         "solar_efficiency": 20,
         "solar_derating": 0.1,
         "battery_age_derating": 0.5,
+        "battery_dod": 80,
+        "power_hybrid_hours": 12,
+        "power_intermittent_hours": 24,
+        "power_reliable_hours": 4,
+        "hh_income_week": 245.9,
+        "staff_opex_fixed": 1.2,
+        "staff_opex_variable": 0.3,
+        "wacc": 6,
+        "spectrum_licence_fee": 0,
+        "community_capex_discount": 0,
+        "inflation": 2.01,
+
         "locations": [
             {
                 "location_name": "Location 1",

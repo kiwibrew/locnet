@@ -2237,7 +2237,6 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
         avg_cost_dm_m =  (pa_capex_per_decision_maker + pa_ps_capex_per_decision_maker + pa_cba_moec_sub)/12
         outcomes_table_rows.extend([
             {"label": "Solution Capex per potential decision maker (ex PAF)", "Value": f"${scpdm:,.2f}"},
-            {"label": "Power cost (annual per decision maker)", "Value": f"${pa_ps_capex_per_decision_maker:,.2f}"},
             {"label": "Annual Operating cost per decision maker (ex PAF)", "Value": f"${pa_cba_moec_sub:,.2f}"},
             {"label": "Monthly average cost of service per decision maker", "Value": f"${avg_cost_dm_m:,.2f}"}
         ])
@@ -2255,7 +2254,6 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
     outcomes_table_rows.extend([
         {"label": "Additional private costs per decision maker", "Value": f"${cba_omsdm_sub:,.2f}"},
         {"label": "Average Annual operator revenue (US$)", "Value": f"${pl_cli_rev_avg:,.0f}"},
-        {"label": "Average Annual subsidy payment (US$)", "Value": f"${pl_cli_sub_avg:,.0f}"},
         {"label": "Average Annual costs (US$)", "Value": f"${pl_tot_op_cos_avg:,.0f}"},
         {"label": "Average Annual operating profit (EBITDA) (US$)", "Value": f"${pl_op_profit_avg:,.0f}"},
         {"label": "Average Annual EBT (US$)", "Value": f"${pl_ebt_avg:,.0f}"},
@@ -2271,8 +2269,8 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
         {"label": "Adoption level (% of possible subscribers)", "Value": f"{cba_pen_sub:.2%}"},
         {"label": "Average Revenue per Service Provider User", "Value": f"${arpu_sp:.2f}"},
         {"label": "Average Revenue per Business User", "Value": f"${arpu_bus:.2f}"},
-        {"label": "Average Revenue per Individual User", "Value": f"${arpu_id:.2f}"},
-        {"label": "Average Revenue per Household", "Value": f"${arpu_hh:.2f}"}
+        {"label": "Average Revenue per Household", "Value": f"${arpu_hh:.2f}"},
+        {"label": "Average Revenue per Individual User", "Value": f"${arpu_id:.2f}"}
     ])
     # endregion
 

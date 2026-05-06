@@ -415,7 +415,7 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
         power_opex += location_power_opex
         # endregion
 
-    # Summarise Power CapEx and OpEx
+    # Summarise Power CapEx and OpEx across all locations
     logging.info(f"Power CapEx is {power_capex} and OpEx is {power_opex}")
 
     # Deduplicate the tech_use list
@@ -469,7 +469,6 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
     tower_capex = sum(tower_costs)
     access_capex = int(round(ldf['access_capex'].sum()))
     midhaul_capex = int(round(mdf['network_link_cost'].sum()))
-    backhaul_capex = int(round(bdf['backhaul_link_capex'].sum()))
     # Useful stats for users of the model to see what they've built
     total_midhaul_available = (mdf['network_link_speed'].sum() / 2).round() if not mdf.empty else 0
     # endregion

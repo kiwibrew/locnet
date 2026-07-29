@@ -45,7 +45,7 @@
 ## Getting started
 Prerequisites
 - Python 3.11+
-- Node.js 18+ (only needed if you will modify/build the SPA)
+- Node.js 24+ (only needed if you will modify/build the SPA)
 - Docker (optional) if you prefer containerised runs
 
 ## Environment and configuration
@@ -67,7 +67,7 @@ pip install -r requirements.txt
 3) Build the SPA (optional if `spa/dist` is already present)
 ```
 cd spa
-npm install
+npm ci
 npm run build
 cd ..
 ```
@@ -111,7 +111,7 @@ This repository keeps its Playwright tests in the separate `playwright/` package
 Run the tests from the `playwright/` directory:
 ```bash
 cd playwright
-npm install
+npm ci
 npm run test:playwright
 npm run test:playwright:ui
 ```

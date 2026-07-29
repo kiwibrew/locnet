@@ -1,15 +1,14 @@
-import { type ImageType } from 'write-excel-file';
+import { type Image as ExcelImage } from 'write-excel-file/browser';
 import { replaceNonNumberChars } from '../../utils/strings';
 
-export type Cell = {
-  type: 'string' | 'date' | 'number';
-  value?: string | number;
-  fontWeight?: 'bold';
-};
+export type Cell =
+  | { type: 'string'; value?: string; fontWeight?: 'bold' }
+  | { type: 'date'; value?: Date; fontWeight?: 'bold' }
+  | { type: 'number'; value?: number; fontWeight?: 'bold' };
 
 export type Row = Cell[];
 
-export type Image = ImageType<Blob>;
+export type Image = ExcelImage;
 
 export type Sheet = {
   name: string;
@@ -58,12 +57,15 @@ export const getSheets = async (exportElm: HTMLElement) => {
         ).map((cell): Cell => {
           const isNumber = cell.querySelector('*[data-number]')
           const text = cell.innerText;
-          return {
-            type: isNumber ? 'number' : 'string',
-            value: isNumber ? parseFloat(replaceNonNumberChars(text)) : text,
-            fontWeight:
-              cell.nodeName.toLowerCase() === 'th' ? 'bold' : undefined,
-          };
+          const fontWeight =
+            cell.nodeName.toLowerCase() === 'th' ? 'bold' : undefined;
+          return isNumber
+            ? {
+                type: 'number',
+                value: parseFloat(replaceNonNumberChars(text)),
+                fontWeight,
+              }
+            : { type: 'string', value: text, fontWeight };
         });
         rows.push(headerRow);
         const trElements = Array.from(
@@ -84,14 +86,15 @@ export const getSheets = async (exportElm: HTMLElement) => {
             return cells.map((cell): Cell => {
               const isNumber = cell.querySelector('*[data-number]')
               const text = cell.innerText;
-              return {
-                type: isNumber ? 'number' : 'string',
-                value: isNumber
-                  ? parseFloat(replaceNonNumberChars(text))
-                  : text,
-                fontWeight:
-                  cell.nodeName.toLowerCase() === 'th' ? 'bold' : undefined,
-              };
+              const fontWeight =
+                cell.nodeName.toLowerCase() === 'th' ? 'bold' : undefined;
+              return isNumber
+                ? {
+                    type: 'number',
+                    value: parseFloat(replaceNonNumberChars(text)),
+                    fontWeight,
+                  }
+                : { type: 'string', value: text, fontWeight };
             });
           }),
         );

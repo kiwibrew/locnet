@@ -239,4 +239,18 @@ test("can load sample data and generate output", async ({ page }) => {
   await page.waitForTimeout(2000);
 
   await expect(page.getByTestId("report")).toHaveText("Report");
+
+  const expectedDownloads = [
+    ["Download CSV", /\.csv$/],
+    ["Download Excel", /\.xlsx$/],
+    ["Download PDF", /\.pdf$/],
+  ] as const;
+
+  for (const [buttonName, extension] of expectedDownloads) {
+    const [download] = await Promise.all([
+      page.waitForEvent("download"),
+      page.getByRole("button", { name: buttonName }).click(),
+    ]);
+    expect(download.suggestedFilename()).toMatch(extension);
+  }
 });

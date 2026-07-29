@@ -27,12 +27,12 @@ export const exportCSV = async (selector: string) => {
       (acc, sheet) => {
         acc.push([sheet.name]);
         sheet.rows.forEach((row) => {
-          acc.push(row.map((cell) => cell.value ?? ''));
+          acc.push(row.map((cell) => String(cell.value ?? '')));
         });
         acc.push([]);
         return acc;
       },
-      [] as (number | string)[][],
+      [] as string[][],
     );
 
     const csvText = csv.stringify(sheetData);

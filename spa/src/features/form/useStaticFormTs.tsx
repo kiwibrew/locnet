@@ -171,10 +171,9 @@ export const useStaticFormTs = <
   if (useFormStoreRef.current === null) {
     // this pattern because of https://react.dev/reference/react/useRef#avoiding-recreating-the-ref-contents
     // a conventional initialValue would recreate the store every render
-    useFormStoreRef.current = create(
-      devtools<T>(
+    useFormStoreRef.current = create<T>()(
+      devtools(
         (zustandSet) =>
-          // @ts-expect-error this needs better TS
           ({
             nodes: props.defaultForm.nodes,
             set: (formPath: FormPath, value: unknown) =>
@@ -184,7 +183,7 @@ export const useStaticFormTs = <
                 }),
               ),
             api: props.defaultForm.api,
-          }) as UseBoundStore<StoreApi<T['nodes']>>,
+          }) as T,
         { name: 'locnet-form' },
       ),
     );
@@ -196,19 +195,18 @@ export const useStaticFormTs = <
   if (useModelStoreRef.current === null) {
     // this pattern because of https://react.dev/reference/react/useRef#avoiding-recreating-the-ref-contents
     // a conventional initialValue would recreate the store every render
-    useModelStoreRef.current = create(
+    useModelStoreRef.current = create<M>()(
       devtools(
         (zustandSet) =>
-          // @ts-expect-error this needs better TS
           ({
-            value: props.defaultModel.root,
+            root: props.defaultModel.root,
             set: (modelPath: ModelPath, value: unknown) =>
               zustandSet((state: M) =>
                 produce(state, (immerState: Draft<M>) => {
                   set(immerState, String(modelPath), value);
                 }),
               ),
-          }) as UseBoundStore<StoreApi<M>>,
+          }) as M,
         { name: 'locnet-model' },
       ),
     );
@@ -218,10 +216,9 @@ export const useStaticFormTs = <
   // Meta store
   const useFormMetaStoreRef = useRef<UseBoundStore<StoreApi<FormMeta>>>(null);
   if (useFormMetaStoreRef.current === null) {
-    useFormMetaStoreRef.current = create(
+    useFormMetaStoreRef.current = create<FormMeta>()(
       devtools(
         (zustandSet) =>
-          // @ts-expect-error this needs better TS
           ({
             value: { isSubmitting: false },
             set: <K extends ObjectPathDeep<FormMeta>>(
@@ -237,7 +234,7 @@ export const useStaticFormTs = <
                   );
                 }),
               ),
-          }) as UseBoundStore<StoreApi<FormMeta>>,
+          }) as FormMeta,
         { name: 'locnet-meta' },
       ),
     );
@@ -349,10 +346,9 @@ export const useStaticFormTs = <
 
           const prevForm = useFormStore.getState();
           const prevModel = useModelStore.getState();
-          let newForm = prevForm;
           let newModel = prevModel;
 
-          newForm = produce(prevForm, (immerForm) => {
+          const newForm = produce(prevForm, (immerForm) => {
             newModel = produce(prevModel, (immerModel) => {
               onSubmit({
                 form: prevForm,

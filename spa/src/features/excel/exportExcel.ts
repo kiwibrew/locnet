@@ -14,7 +14,7 @@ export const exportExcel = async (selector: string) => {
 
   const sheets = await getSheets(exportElm);
 
-  import('write-excel-file').then(async (module) => {
+  import('write-excel-file/browser').then(async (module) => {
     const writeXlsxFile = module.default;
 
     const timeToGeneratePDFinMs = Date.now() - startTimeMs;
@@ -24,9 +24,9 @@ export const exportExcel = async (selector: string) => {
 
     const timestamp = new Date().toISOString().replace(/T/g, '_');
 
-    const xlsxSheets = sheets.map((sheet) =>
-      sheet.rows.map((row) => {
-        return row.map((cell) => {
+    const xlsxSheets = sheets.map((sheet) => ({
+      data: sheet.rows.map((row) =>
+        row.map((cell) => {
           switch (cell.type) {
             case 'string':
               return {
@@ -47,23 +47,16 @@ export const exportExcel = async (selector: string) => {
                 fontWeight: cell.fontWeight,
               };
           }
-        });
-      }),
-    );
-
-    console.log({ sheets, xlsxSheets })
-
-    await writeXlsxFile(xlsxSheets, {
-      fileName: `Community Network Builder Export - ${timestamp}.xlsx`,
-      sheets: sheets.map((sheet) =>
-        sheet.name.trim().substring(
-          0,
-          // excel format has max sheet name length of 31 chars
-          31,
-        ),
+        }),
       ),
-      images: sheets.map((sheet) => sheet.images),
-    });
+      // Excel limits sheet names to 31 characters.
+      sheet: sheet.name.trim().substring(0, 31),
+      images: sheet.images,
+    }));
+
+    await writeXlsxFile(xlsxSheets).toFile(
+      `Community Network Builder Export - ${timestamp}.xlsx`,
+    );
 
     await sleep(50); // wait for spreadsheet to load
     document.body.classList.remove(printModeClassName);

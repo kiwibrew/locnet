@@ -1,3 +1,5 @@
+import type { ExportOptions } from 'dompdf.js';
+
 const MINIMUM_PRINT_TIME_MS = 2000;
 
 export const exportPdf = (selector: string) => {
@@ -5,7 +7,6 @@ export const exportPdf = (selector: string) => {
   document.body.classList.add(printModeClassName);
   const startTimeMs = Date.now();
   import(
-    // @ts-expect-error this doesn't have typescript libs
     'dompdf.js'
   ).then((module) => {
     const options = {
@@ -24,7 +25,7 @@ export const exportPdf = (selector: string) => {
           padding: [0, 0, 0, 0],
         },
       },
-    };
+    } satisfies ExportOptions;
     const dompdf = module.default;
 
     const exportElm = document.querySelector<HTMLDivElement>(selector);

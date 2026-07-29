@@ -10,6 +10,7 @@ const configuredLocation = (): NetworkElement => ({
   location_name: 'Location 1',
   latitude: 41.145639143,
   longitude: 20.0064944925175,
+  radius: 2,
   power_type: 'power_mains_rel',
   towerType: {
     name: '',

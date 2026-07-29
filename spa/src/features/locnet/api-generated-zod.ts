@@ -26,6 +26,7 @@ export const locationDataSchema = z.object({
     location_name: z.string(),
     latitude: z.number(),
     longitude: z.number(),
+    radius: z.number().optional(),
     tower_cost: z.number().nullable(),
     network_type: z.array(z.string()),
     sectors: z.array(z.number()),

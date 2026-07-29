@@ -85,6 +85,7 @@ export const NetworkElementSchema = FormNodeSchema.extend({
   location_name_error: z.string().optional(),
   latitude: z.number(),
   longitude: z.number(),
+  radius: z.number().min(0.05).max(50).default(2),
   networkTypes: NetworkTypeSchema.array(),
   towerType: TowerTypeSchema,
   midhaulLink: MidhaulLinkSchema.array(),
@@ -159,6 +160,7 @@ export const RenderNetworkElements = ({ node, formPath }: Props) => {
           // Default new locations to the selected country's centroid.
           latitude: boundsData?.centroid_lat ?? 0,
           longitude: boundsData?.centroid_long ?? 0,
+          radius: 2,
         }),
       ];
     });
@@ -398,6 +400,7 @@ const RenderNetworkLocation = ({
         locationIndex={index}
         defaultLatitude={networkLocation.latitude}
         defaultLongitude={networkLocation.longitude}
+        defaultRadius={networkLocation.radius}
       />
 
       <RenderNetworkTypes

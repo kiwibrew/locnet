@@ -99,6 +99,7 @@ class LocationData(BaseModel):
     location_name: str
     latitude: float
     longitude: float
+    radius: float = Field(default=2.0, ge=0.05, le=50.0)
     tower_cost: Optional[float]
     network_type: List[str]
     sectors: List[int]

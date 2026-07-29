@@ -325,6 +325,7 @@ export type LocationData = {
   location_name: string;
   latitude: number;
   longitude: number;
+  radius?: number;
   tower_cost: number | null;
   network_type: string[];
   sectors: number[];

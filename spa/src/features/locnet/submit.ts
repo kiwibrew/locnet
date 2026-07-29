@@ -140,6 +140,7 @@ const networkElementToLocationData = (
   location_name: networkElement.location_name,
   latitude: networkElement.latitude,
   longitude: networkElement.longitude,
+  radius: networkElement.radius,
   power_type: networkElement.power_type ?? null,
   tower_cost: parseFloat(networkElement.towerType.cost_USD),
   network_type: networkElement.networkTypes.map(
@@ -173,6 +174,7 @@ const locationDataToNetworkElement = (
   location_name: locationData.location_name,
   latitude: locationData.latitude,
   longitude: locationData.longitude,
+  radius: locationData.radius ?? 2,
   power_type: locationData.power_type,
   networkTypes: locationData.network_type.map(
     (network_type_item, index): NetworkElement['networkTypes'][number] => {

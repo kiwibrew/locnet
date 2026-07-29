@@ -5,6 +5,8 @@ services:
       dockerfile: ./Dockerfile
     restart: always
     container_name: web-locnet
+    env_file:
+      - .env
     develop:
       watch:
         - action: sync

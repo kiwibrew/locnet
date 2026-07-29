@@ -25,7 +25,6 @@ app = FastAPI(title='Community Network Modeler',
               description='An application to model simple community networks',
               version='2.1')
 
-app.mount("/cache", StaticFiles(directory="cache"), name="cache")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/assets", StaticFiles(directory="spa/dist/assets"), name="assets")
 app.mount("/documentation-assets", StaticFiles(directory=DOCUMENTS_DIRECTORY), name="documentation-assets")

@@ -105,7 +105,7 @@ export type NetworkLocations = z.infer<typeof NetworkElementsSchema>;
 type Props = NodeProps<NetworkLocations>;
 
 export const RenderNetworkElements = ({ node, formPath }: Props) => {
-  const { useFormAndModel } = useStaticFormTsContext();
+  const { useFormAndModel, useWatchFormByNodeType } = useStaticFormTsContext();
   const boundsData = useBoundsData();
   const locationsId = formPathJoin<NetworkLocations>(formPath, 'locations');
   const networkLocationsCountRef = useRef<HTMLInputElement>(null);
@@ -116,7 +116,40 @@ export const RenderNetworkElements = ({ node, formPath }: Props) => {
   );
   const locationsCountId = `${locationsId}.length`;
 
+  const technologies = useWatchFormByNodeType('Technologies');
+  const hasSelectedTechnology =
+    technologies?.children?.some(
+      (technology) => technology.type === 'ToggleButton' && technology.checked,
+    ) ?? false;
+  const selectTechnologyMessage = useIntlIdOrText('sel_tech_one', undefined);
+
+  const getFirstTechnologyInput = useCallback(() => {
+    const form = networkLocationsCountRef.current?.form;
+    return form
+      ?.querySelector('[data-form-node="technologies"]')
+      ?.querySelector<HTMLInputElement>(
+        'input[type="checkbox"]:not(:disabled)',
+      );
+  }, []);
+
   const handleAdd = useCallback(() => {
+    if (!hasSelectedTechnology) {
+      const technologyInput = getFirstTechnologyInput();
+      const errorMessage =
+        selectTechnologyMessage ?? 'Please select at least one technology.';
+
+      if (!technologyInput) {
+        console.error("Couldn't find a technology input");
+        window.alert(errorMessage);
+        return;
+      }
+
+      technologyInput.setCustomValidity(errorMessage);
+      technologyInput.focus();
+      requestAnimationFrame(() => technologyInput.reportValidity());
+      return;
+    }
+
     setNetworkLocations((prevLocations) => {
       const nonSoftDeletedLocations = removeSoftDeletes(prevLocations);
       return [
@@ -129,7 +162,19 @@ export const RenderNetworkElements = ({ node, formPath }: Props) => {
         }),
       ];
     });
-  }, [setNetworkLocations, boundsData]);
+  }, [
+    setNetworkLocations,
+    boundsData,
+    hasSelectedTechnology,
+    getFirstTechnologyInput,
+    selectTechnologyMessage,
+  ]);
+
+  useEffect(() => {
+    if (hasSelectedTechnology) {
+      getFirstTechnologyInput()?.setCustomValidity('');
+    }
+  }, [hasSelectedTechnology, getFirstTechnologyInput]);
 
   const canDelete = networkLocations
     ? networkLocations.filter(
@@ -223,6 +268,7 @@ export const RenderNetworkElements = ({ node, formPath }: Props) => {
         <button
           type="button"
           onClick={handleAdd}
+          aria-disabled={!hasSelectedTechnology}
           className={styles.addButton}
           data-testid="add_network_location"
         >

@@ -38,7 +38,7 @@ export const RenderTechnologies = ({ formPath }: TechnologiesProps) => {
   }, [useFormStore, childrenId]);
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} data-form-node="technologies">
       <RenderNodes id={childrenId} nodes={childrenNodes} />
     </div>
   );

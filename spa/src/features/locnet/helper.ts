@@ -9,6 +9,7 @@ import { useStaticFormTsContext } from '../form/FormProvider';
 
 // Sample data value from API docs
 export const sampleData: BuilderInput = {
+  model_version: 2,
   iso_3: 'PER',
   area_sqkm: 100,
   households_total: 100,
@@ -26,8 +27,6 @@ export const sampleData: BuilderInput = {
   paf_sub_use: 4,
   paf_non_sub_use: 9,
   paf_facilities_charge: 0.25,
-  terrain_type: 'None',
-  vegetation_type: 'None',
   provider_type: 'provider_community',
   oc_margin: 15,
   other_opex: 7.5,
@@ -70,8 +69,12 @@ export const sampleData: BuilderInput = {
       location_name: 'Location 1',
       latitude: 0,
       longitude: 0,
+      radius: 2,
+      households: null,
       power_type: 'power_mains_rel',
       tower_cost: 1000,
+      tower_opex: 0,
+      tower_height: 6,
       network_type: ['ISM FWA 5.8 GHz', 'ISM Wi-Fi 2.4 GHz'],
       sectors: [1, 1],
       network_links: ['ISM FWA 500'],
@@ -83,8 +86,12 @@ export const sampleData: BuilderInput = {
       location_name: 'Location 2',
       latitude: 0,
       longitude: 0,
+      radius: 2,
+      households: null,
       power_type: 'power_mains_rel',
       tower_cost: 1000,
+      tower_opex: 0,
+      tower_height: 6,
       network_type: ['ISM FWA 5.8 GHz', 'ISM Wi-Fi 2.4 GHz'],
       sectors: [1, 1],
       network_links: ['ISM FWA 500', 'ISM FWA 500'],
@@ -96,8 +103,12 @@ export const sampleData: BuilderInput = {
       location_name: 'Location 3',
       latitude: 0,
       longitude: 0,
+      radius: 2,
+      households: null,
       power_type: 'power_solar',
       tower_cost: 1000,
+      tower_opex: 0,
+      tower_height: 6,
       network_type: ['ISM FWA 5.8 GHz', 'ISM Wi-Fi 2.4 GHz'],
       sectors: [1, 1],
       network_links: ['ISM FWA 500'],
@@ -155,7 +166,7 @@ export const useLoadBuilderInput = () => {
       await sleepPromise(1000)
 
       const formPathForNetworkElements: LocNetFormPath =
-        'nodes.2.children.0.children.7.children.0';
+        'nodes.2.children.0.children.6.children.0';
       const networkElements = get(useFormStore.getState(), formPathForNetworkElements);
       if (!networkElements || networkElements.type !== 'NetworkElements') {
         console.error(
@@ -191,6 +202,7 @@ export const useLoadBuilderInput = () => {
             // in the switch/case to allow assertNever() below to work
             // and assert that we've handled all keys
             break;
+          case 'model_version':
           case 'area_sqkm':
           case 'battery_age_derating':
           case 'battery_cost_watt_hour':
@@ -208,11 +220,9 @@ export const useLoadBuilderInput = () => {
           case 'solar_derating':
           case 'solar_efficiency':
           case 'system_life':
-          case 'terrain_type':
           case 'total_potential_users':
           case 'traffic_growth':
           case 'users_per_household':
-          case 'vegetation_type':
           case 'year_1_traffic':
           case 'households_total':
           case 'hh_size':

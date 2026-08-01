@@ -45,12 +45,11 @@ async def get_spa(request: Request, lang: str = 'en', ajax: bool = Query(False))
         text_data = get_text()
         selected_text = {item['element']: item[lang] for item in text_data}
         frequencies = get_frequencies()
-        terrain = get_terrain()
-        vegetation = get_vegetation()
         technologies = get_technologies()
         midhaul_data = get_midhaul()
         backhaul_data = get_backhaul()
         tower_data = get_towers()
+        tower_details = get_tower_details()
         all_net_types = get_network_types()
         tech_data = get_tech_data()
         paf_facilities_charge = get_paf_facilities_charge()
@@ -66,14 +65,13 @@ async def get_spa(request: Request, lang: str = 'en', ajax: bool = Query(False))
                                            "text": text_data,
                                            "selected_language": lang,
                                            "frequencies": frequencies,
-                                           "terrain": terrain,
-                                           "vegetation": vegetation,
                                            "technologies": technologies,
                                            "network_types": all_net_types,
                                            "power_types": power_types,
                                            "midhaul_data": midhaul_data,
                                            "backhaul_data": backhaul_data,
                                            "tower_data": tower_data,
+                                           "tower_details": tower_details,
                                            "tech_data": tech_data,
                                            "paf_facilities_charge": paf_facilities_charge,
                                           } )

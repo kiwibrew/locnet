@@ -219,7 +219,8 @@ export type Body_post_handler__post = {
 };
 
 export type BuilderInput = {
-  area_sqkm: number;
+  model_version?: number;
+  area_sqkm?: number | null;
   battery_age_derating: number;
   battery_cost_watt_hour: number;
   battery_dod: number;
@@ -238,11 +239,9 @@ export type BuilderInput = {
   solar_derating: number;
   solar_efficiency: number;
   system_life: number;
-  terrain_type?: string | null;
-  total_potential_users: number;
+  total_potential_users?: number | null;
   traffic_growth: number;
   users_per_household: number;
-  vegetation_type?: string | null;
   year_1_traffic: number;
   households_total?: number | null;
   hh_size?: number | null;
@@ -326,7 +325,10 @@ export type LocationData = {
   latitude: number;
   longitude: number;
   radius?: number;
-  tower_cost: number | null;
+  households?: number | null;
+  tower_cost?: number | null;
+  tower_opex?: number | null;
+  tower_height?: number | null;
   network_type: string[];
   sectors: number[];
   network_links: string[];

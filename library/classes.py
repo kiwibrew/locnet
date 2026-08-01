@@ -1,4 +1,5 @@
-from pydantic import BaseModel, RootModel, Field
+from math import pi
+from pydantic import BaseModel, ConfigDict, RootModel, Field, model_validator
 from typing import List, Optional, Dict, Any
 
 
@@ -96,11 +97,16 @@ class BoundsResponse(BaseModel):
 
 # Define the input data model
 class LocationData(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
     location_name: str
-    latitude: float
-    longitude: float
+    latitude: float = Field(ge=-90, le=90)
+    longitude: float = Field(ge=-180, le=180)
     radius: float = Field(default=2.0, ge=0.05, le=50.0)
-    tower_cost: Optional[float]
+    households: Optional[int] = Field(default=None, ge=0)
+    tower_cost: Optional[float] = Field(default=None, ge=0)
+    tower_opex: Optional[float] = Field(default=None, ge=0)
+    tower_height: Optional[float] = Field(default=None, gt=0)
     network_type: List[str]
     sectors: List[int]
     network_links: List[str]
@@ -111,7 +117,10 @@ class LocationData(BaseModel):
 
 
 class BuilderInput(BaseModel):
-    area_sqkm: float
+    model_config = ConfigDict(extra="ignore", protected_namespaces=())
+
+    model_version: int = Field(default=2, ge=1)
+    area_sqkm: Optional[float] = None
     battery_age_derating: float
     battery_cost_watt_hour: float
     battery_dod: float
@@ -130,15 +139,13 @@ class BuilderInput(BaseModel):
     solar_derating: float
     solar_efficiency: int
     system_life: int
-    terrain_type: Optional[str] = Field(default="none")
-    total_potential_users: float
+    total_potential_users: Optional[float] = Field(default=None, ge=0)
     traffic_growth: float
     users_per_household: float
-    vegetation_type: Optional[str] = Field(default="none")
     year_1_traffic: int
 
     # Expanded Economic Model Fields
-    households_total: Optional[int] = Field(default=100)
+    households_total: Optional[int] = Field(default=None, ge=0)
     hh_size: Optional[float] = Field(default=3)
     pop_growth_rate: Optional[float] = Field(default=0.3)
     hh_income_week: float
@@ -172,6 +179,17 @@ class BuilderInput(BaseModel):
     provider_type: Optional[str] = Field(default="provider_community")
     existing_ue_above_med: Optional[float] = Field(default=.30)
     existing_ue_below_med: Optional[float] = Field(default=.1)
+
+    @model_validator(mode="after")
+    def derive_location_aggregates(self):
+        """Legacy submitted aggregate values never override location data."""
+        self.area_sqkm = round(
+            sum(pi * location.radius ** 2 for location in self.locations), 2
+        )
+        self.households_total = sum(
+            location.households or 0 for location in self.locations
+        )
+        return self
 
 
 # Define the output data model
@@ -211,7 +229,6 @@ class BuilderOutput(BaseModel):
     solar_derating: Optional[float] = None
     solar_efficiency: Optional[int] = None
     system_life: int
-    terrain_type: str
     total_potential_users: Optional[float] = None
     total_system_cost: int
     tower_cost: Optional[float] = None
@@ -219,7 +236,6 @@ class BuilderOutput(BaseModel):
     traffic_growth: Optional[float] = None
     users_per_household: Optional[float] = None
     users_supported: int
-    vegetation_type: Optional[str] = None
     year_1_traffic: Optional[int] = None
     detailed_results: List[Dict[str, Any]]
 
@@ -262,7 +278,6 @@ class ModelerOutput(BaseModel):
     solar_efficiency: Optional[int] = None
     system_capex: int
     system_life: int
-    terrain_type: str
     total_potential_users: Optional[float] = None
     total_system_cost: int
     tower_cost: Optional[float] = None
@@ -270,7 +285,6 @@ class ModelerOutput(BaseModel):
     traffic_growth: Optional[float] = None
     users_per_household: Optional[float] = None
     users_supported: int
-    vegetation_type: Optional[str] = None
     year_1_traffic: Optional[int] = None
     detailed_results: List[Dict[str, Any]]
     demand_curve_points: List[Dict[str, float]] = Field(default_factory=list)

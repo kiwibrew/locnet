@@ -7,6 +7,7 @@ import {
   useEffect,
   useMemo,
   useRef,
+  useState,
   type ChangeEvent,
 } from 'react';
 import {
@@ -27,6 +28,9 @@ import {
   powerTypesFromDOM,
   newLocationName,
   techDataFromDOM,
+  towerDetailsDataFromDOM,
+  calculateLocationsAreaSqKm,
+  calculateOverrideHouseholds,
 } from './NetworkElements.utils';
 import { Text } from '../Intl';
 import { useIntlIdOrText } from '../Intl.utils';
@@ -37,6 +41,7 @@ import { useCustomErrorRef } from '../useCustomError';
 import { NBSP } from '../../../utils/strings';
 import { clamp } from 'lodash-es';
 import { hasConfiguredLocation } from '../../locnet/locationValidation';
+import { QuestionMarkCircle } from './FieldHelp';
 
 export const BackhaulLinkSchema = z.object({
   key: z.string(),
@@ -72,6 +77,8 @@ export type NetworkType = z.infer<typeof NetworkTypeSchema>;
 const TowerTypeSchema = z.object({
   name: z.string(),
   cost_USD: z.string(),
+  opex_USD: z.string(),
+  height_m: z.string(),
 });
 
 type TowerType = z.infer<typeof TowerTypeSchema>;
@@ -86,6 +93,8 @@ export const NetworkElementSchema = FormNodeSchema.extend({
   latitude: z.number(),
   longitude: z.number(),
   radius: z.number().min(0.05).max(50).default(2),
+  use_model_households: z.boolean().default(true),
+  households: z.string(),
   networkTypes: NetworkTypeSchema.array(),
   towerType: TowerTypeSchema,
   midhaulLink: MidhaulLinkSchema.array(),
@@ -106,7 +115,11 @@ export type NetworkLocations = z.infer<typeof NetworkElementsSchema>;
 type Props = NodeProps<NetworkLocations>;
 
 export const RenderNetworkElements = ({ node, formPath }: Props) => {
-  const { useFormAndModel, useWatchFormByNodeType } = useStaticFormTsContext();
+  const {
+    useFormAndModel,
+    useWatchFormByNodeType,
+    setModelAndFormByModelRoot,
+  } = useStaticFormTsContext();
   const boundsData = useBoundsData();
   const locationsId = formPathJoin<NetworkLocations>(formPath, 'locations');
   const networkLocationsCountRef = useRef<HTMLInputElement>(null);
@@ -116,6 +129,17 @@ export const RenderNetworkElements = ({ node, formPath }: Props) => {
     node.locations,
   );
   const locationsCountId = `${locationsId}.length`;
+
+  useEffect(() => {
+    setModelAndFormByModelRoot(
+      'area_sqkm',
+      calculateLocationsAreaSqKm(networkLocations),
+    );
+    setModelAndFormByModelRoot(
+      'households_total',
+      calculateOverrideHouseholds(networkLocations),
+    );
+  }, [networkLocations, setModelAndFormByModelRoot]);
 
   const technologies = useWatchFormByNodeType('Technologies');
   const hasSelectedTechnology =
@@ -403,6 +427,14 @@ const RenderNetworkLocation = ({
         defaultRadius={networkLocation.radius}
       />
 
+      <RenderHouseholdOverride
+        id={id}
+        modelPath={modelPath}
+        locationIndex={index}
+        defaultUseModel={networkLocation.use_model_households}
+        defaultHouseholds={networkLocation.households}
+      />
+
       <RenderNetworkTypes
         id={networkTypesId}
         locationIndex={index}
@@ -429,6 +461,110 @@ const RenderNetworkLocation = ({
         modelPath={modelPath}
         networkLocation={networkLocation}
       />
+    </div>
+  );
+};
+
+type RenderHouseholdOverrideProps = {
+  id: FormPath;
+  modelPath: ModelPath;
+  locationIndex: number;
+  defaultUseModel: boolean;
+  defaultHouseholds: string;
+};
+
+const RenderHouseholdOverride = ({
+  id,
+  modelPath,
+  locationIndex,
+  defaultUseModel,
+  defaultHouseholds,
+}: RenderHouseholdOverrideProps) => {
+  const { useFormAndModel } = useStaticFormTsContext();
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const useModelId = `${id}.${
+    'use_model_households' satisfies keyof NetworkElement
+  }` as FormPath;
+  const useModelPath = `${modelPath}.${
+    'use_model_households' satisfies keyof NetworkElement
+  }` as ModelPath;
+  const householdsId = `${id}.${
+    'households' satisfies keyof NetworkElement
+  }` as FormPath;
+  const householdsPath = `${modelPath}.${
+    'households' satisfies keyof NetworkElement
+  }` as ModelPath;
+  const [useModel, setUseModel] = useFormAndModel(
+    useModelId,
+    useModelPath,
+    defaultUseModel,
+  );
+  const [households, setHouseholds] = useFormAndModel(
+    householdsId,
+    householdsPath,
+    defaultHouseholds,
+  );
+
+  const handleUseModelChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      setUseModel(event.target.checked);
+      if (event.target.checked) {
+        setHouseholds('');
+      }
+    },
+    [setHouseholds, setUseModel],
+  );
+
+  const handleHouseholdsChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      setHouseholds(event.target.value);
+    },
+    [setHouseholds],
+  );
+
+  return (
+    <div className={styles.householdOverrideContainer}>
+      <div className={styles.householdOverrideRow}>
+        <label className={styles.householdModelLabel}>
+          <input
+            id={useModelId}
+            name={useModelId}
+            type="checkbox"
+            checked={useModel}
+            onChange={handleUseModelChange}
+            data-testid={`location-${locationIndex}-model-households`}
+          />
+          <Text intlId="model_households" />
+        </label>
+        <label className={styles.householdHelpLabel}>
+          <input
+            type="checkbox"
+            className={styles.householdHelpCheckbox}
+            checked={isHelpOpen}
+            onChange={(event) => setIsHelpOpen(event.target.checked)}
+            aria-label="Toggle household model help"
+          />
+          <QuestionMarkCircle isOpen={isHelpOpen} />
+        </label>
+        <input
+          id={householdsId}
+          name={householdsId}
+          type="number"
+          min="0"
+          step="1"
+          required={!useModel}
+          disabled={useModel}
+          value={useModel ? '' : households}
+          onChange={handleHouseholdsChange}
+          className={styles.householdOverrideInput}
+          data-testid={`location-${locationIndex}-households`}
+        />
+      </div>
+      {isHelpOpen && (
+        <div className={styles.householdHelpText}>
+          <Text intlId="model_households_text" />
+        </div>
+      )}
     </div>
   );
 };
@@ -810,6 +946,13 @@ const RenderTowerTypes = ({
   modelPath,
 }: RenderTowerTypesProps) => {
   const { useFormAndModel } = useStaticFormTsContext();
+  const defaultTowerType = towerTypesDataFromDOM[0];
+  const towerOpexDetail = towerDetailsDataFromDOM.find(
+    (detail) => detail.variable === 'tower_opex',
+  );
+  const towerHeightDetail = towerDetailsDataFromDOM.find(
+    (detail) => detail.variable === 'tower_height',
+  );
   const towerTypeNameId = `${id}.${
     'name' satisfies keyof TowerType
   }` as FormPath;
@@ -819,7 +962,7 @@ const RenderTowerTypes = ({
   const [towerTypeName, setTowerTypeName] = useFormAndModel(
     towerTypeNameId,
     towerTypeNameModelPath,
-    '',
+    defaultTowerType?.variable ?? '',
   );
   const towerTypeCost_USD_Id = `${id}.${
     'cost_USD' satisfies keyof TowerType
@@ -830,8 +973,35 @@ const RenderTowerTypes = ({
   const [towerTypeCost_USD, setTowerTypeCost_USD] = useFormAndModel(
     towerTypeCost_USD_Id,
     towerTypeCost_USD_modelPath,
-    towerTypesDataFromDOM[0].value.toString(),
+    defaultTowerType?.value.toString() ?? '',
   );
+  const towerTypeOpexId = `${id}.${
+    'opex_USD' satisfies keyof TowerType
+  }` as FormPath;
+  const towerTypeOpexModelPath = `${modelPath}.${
+    'opex_USD' satisfies keyof TowerType
+  }` as ModelPath;
+  const [towerTypeOpex, setTowerTypeOpex] = useFormAndModel(
+    towerTypeOpexId,
+    towerTypeOpexModelPath,
+    towerOpexDetail?.value.toString() ?? '',
+  );
+  const towerTypeHeightId = `${id}.${
+    'height_m' satisfies keyof TowerType
+  }` as FormPath;
+  const towerTypeHeightModelPath = `${modelPath}.${
+    'height_m' satisfies keyof TowerType
+  }` as ModelPath;
+  const [towerTypeHeight, setTowerTypeHeight] = useFormAndModel(
+    towerTypeHeightId,
+    towerTypeHeightModelPath,
+    towerHeightDetail?.value.toString() ?? '',
+  );
+
+  const selectedTowerType =
+    towerTypesDataFromDOM.find(
+      (towerType) => towerType.variable === towerTypeName,
+    ) ?? defaultTowerType;
 
   const handleTowerTypeChange = useCallback(
     (e: ChangeEvent<HTMLSelectElement>) => {
@@ -840,8 +1010,12 @@ const RenderTowerTypes = ({
         throw Error('expected <select>');
       }
       setTowerTypeName(target.value);
-      // also set cost
-      setTowerTypeCost_USD(target.value);
+      const selected = towerTypesDataFromDOM.find(
+        (towerType) => towerType.variable === target.value,
+      );
+      if (selected) {
+        setTowerTypeCost_USD(selected.value.toString());
+      }
     },
     [setTowerTypeName, setTowerTypeCost_USD],
   );
@@ -857,13 +1031,19 @@ const RenderTowerTypes = ({
     [setTowerTypeCost_USD],
   );
 
-  const moveFocus = useCallback(() => {
-    const input = document.getElementById(towerTypeCost_USD_Id);
-    if (!(input instanceof HTMLInputElement)) {
-      throw Error(`Couldn't find #${towerTypeCost_USD_Id}`);
-    }
-    input.focus();
-  }, [towerTypeCost_USD_Id]);
+  const handleOpexChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      setTowerTypeOpex(event.target.value);
+    },
+    [setTowerTypeOpex],
+  );
+
+  const handleHeightChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      setTowerTypeHeight(event.target.value);
+    },
+    [setTowerTypeHeight],
+  );
 
   return (
     <div className={styles.towerTypeContainer}>
@@ -884,6 +1064,7 @@ const RenderTowerTypes = ({
               className={styles.towerTypeGridSelect}
               onChange={handleTowerTypeChange}
               value={towerTypeName}
+              required
               data-testid={`location-${locationIndex}-towerType`}
             >
               <option value="" disabled>
@@ -892,7 +1073,10 @@ const RenderTowerTypes = ({
                 <Text intlId="tower_type" />
               </option>
               {towerTypesDataFromDOM.map((towerTypeData) => (
-                <option value={towerTypeData.value}>
+                <option
+                  key={towerTypeData.variable}
+                  value={towerTypeData.variable}
+                >
                   <Text intlId={towerTypeData.element} />
                 </option>
               ))}
@@ -909,16 +1093,67 @@ const RenderTowerTypes = ({
                 id={towerTypeCost_USD_Id}
                 name={towerTypeCost_USD_Id}
                 type="number"
+                min={selectedTowerType?.min}
+                max={selectedTowerType?.max}
+                step={selectedTowerType?.step}
+                required
                 className={styles.towerTypeCostInputNumber}
                 onChange={handleCostChange}
                 value={towerTypeCost_USD}
                 data-testid={`location-${locationIndex}-towerTypeCost_USD`}
               />
-              <span
-                onClick={moveFocus}
-                className={styles.towerTypeCostInputNumberUnit}
-              >
+              <span className={styles.towerTypeCostInputNumberUnit}>
                 USD
+              </span>
+            </div>
+          </label>
+        </div>
+        <div>
+          <label className={styles.towerTypeGridRow}>
+            <span className={styles.labelWidth}>
+              <Text intlId="tower_opex" />
+            </span>
+            <div className={styles.towerTypeNumberAndUnitContainer}>
+              <input
+                id={towerTypeOpexId}
+                name={towerTypeOpexId}
+                type="number"
+                min={towerOpexDetail?.min}
+                max={towerOpexDetail?.max}
+                step={towerOpexDetail?.step}
+                required
+                className={styles.towerTypeCostInputNumber}
+                onChange={handleOpexChange}
+                value={towerTypeOpex}
+                data-testid={`location-${locationIndex}-towerOpex`}
+              />
+              <span className={styles.towerTypeCostInputNumberUnit}>
+                {towerOpexDetail?.unit ?? 'USD'}
+              </span>
+            </div>
+          </label>
+        </div>
+        <div>
+          <label className={styles.towerTypeGridRow}>
+            <span className={styles.labelWidth}>
+              <Text intlId="tower_height" />
+            </span>
+            <div className={styles.towerTypeNumberAndUnitContainer}>
+              <input
+                id={towerTypeHeightId}
+                name={towerTypeHeightId}
+                type="number"
+                min={towerHeightDetail?.min}
+                max={towerHeightDetail?.max}
+                step={towerHeightDetail?.step}
+                required
+                className={styles.towerTypeCostInputNumber}
+                onChange={handleHeightChange}
+                value={towerTypeHeight}
+                data-testid={`location-${locationIndex}-towerHeight`}
+              />
+              <span className={styles.towerTypeCostInputNumberUnit}>
+                {towerHeightDetail?.unit ?? 'meters'}
               </span>
             </div>
           </label>

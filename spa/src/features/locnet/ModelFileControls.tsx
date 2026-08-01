@@ -10,9 +10,10 @@ import { builderInputSchema } from './api-generated-zod';
 import { validateBuilderInput } from './api';
 import { useLoadBuilderInput } from './helper';
 import type { LocNetModel } from './model';
-import { getModelFileName } from './modelFile';
+import { getModelFileName, isLegacyModelFile } from './modelFile';
 import { locnetModelToBuilderInput } from './submit';
 import styles from './ModelFileControls.module.css';
+import { useIntlIdOrText } from '../form/Intl.utils';
 
 export const ModelFileControls = () => {
   const { useWatchModelStore } = useStaticFormTsContext();
@@ -20,6 +21,7 @@ export const ModelFileControls = () => {
   const loadBuilderInput = useLoadBuilderInput();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const oldModelWarning = useIntlIdOrText('warning_old_model', undefined);
 
   const chooseModelFile = useCallback(
     (event: MouseEvent<HTMLAnchorElement>) => {
@@ -50,6 +52,13 @@ export const ModelFileControls = () => {
           throw Error('The selected file is not valid JSON.');
         }
 
+        if (isLegacyModelFile(unvalidatedInput)) {
+          alert(
+            oldModelWarning ??
+              'This model was saved by an older version. Aggregate area and household inputs will be derived from its locations, and new location fields may be required.',
+          );
+        }
+
         // The endpoint uses the Python BuilderInput class as its request model.
         const builderInput = await validateBuilderInput(unvalidatedInput);
         await loadBuilderInput(builderInput);
@@ -60,7 +69,7 @@ export const ModelFileControls = () => {
         setIsLoading(false);
       }
     },
-    [isLoading, loadBuilderInput],
+    [isLoading, loadBuilderInput, oldModelWarning],
   );
 
   const saveModel = useCallback(

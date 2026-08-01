@@ -50,27 +50,18 @@ export const locNetFormResolver: LocNetFormValueResolver = ({
 
   // when these fields change recalculate other values
   switch (modelRootPath) {
-    case 'households_total':
     case 'hh_size':
     case 'paf_non_sub_use': {
-      const households = getNumberOrUndefined(immerModel.root.households_total);
       const size = getNumberOrUndefined(immerModel.root.hh_size);
       const nonUsers = getNumberOrUndefined(immerModel.root.paf_non_sub_use);
 
       // Calculate users per household: hh_size * (1-(non_users_pct/100))
       const usersPerHH = size * (1 - nonUsers / 100);
 
-      // Calculate total potential users: households_total * users_per_household
-      const totalUsers = households * usersPerHH;
-
-      // Update the read-only fields with formatted values
+      // Update the read-only eligible-users-per-household field.
       setFormAndModelValueByModelRootPath(
         'users_per_household',
         parseFloat(usersPerHH.toFixed(2)), // 2 decimal places, converted back to number
-      );
-      setFormAndModelValueByModelRootPath(
-        'total_potential_users',
-        Math.round(totalUsers), // Rounded to whole number
       );
       break;
     }

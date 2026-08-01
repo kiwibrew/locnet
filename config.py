@@ -31,3 +31,15 @@ MAP_TILE_REFERER = os.getenv("MAP_TILE_REFERER", "https://locnet.io")
 # browser's mixed-content blocker. Only set this if you need to hard-override the
 # public origin (e.g. an unusual proxy that does not forward those headers).
 MAP_PUBLIC_BASE_URL = os.getenv("MAP_PUBLIC_BASE_URL", "")
+
+# Coverage and population services. Each service issues its own persistent
+# bearer token, so deployments configure the credentials independently.
+GLO30_API_URL = os.getenv("GLO30_API_URL", "")
+GLO30_API_TOKEN = os.getenv("GLO30_API_TOKEN", "")
+ESAWC_API_URL = os.getenv("ESAWC_API_URL", "")
+ESAWC_API_TOKEN = os.getenv("ESAWC_API_TOKEN", "")
+WPOP_API_URL = os.getenv("WPOP_API_URL", "")
+WPOP_API_TOKEN = os.getenv("WPOP_API_TOKEN", "")
+GEOSPATIAL_API_TIMEOUT_SECONDS = float(
+    os.getenv("GEOSPATIAL_API_TIMEOUT_SECONDS", "300")
+)

@@ -59,10 +59,18 @@ export const newBlankLocation = (
     latitude: 0,
     longitude: 0,
     radius: 2,
+    use_model_households: true,
+    households: '',
     networkTypes: [],
     towerType: {
-      name: '',
-      cost_USD: '0',
+      name: towerTypesDataFromDOM[0]?.variable ?? '',
+      cost_USD: towerTypesDataFromDOM[0]?.value.toString() ?? '',
+      opex_USD: towerDetailsDataFromDOM
+        .find((detail) => detail.variable === 'tower_opex')
+        ?.value.toString() ?? '',
+      height_m: towerDetailsDataFromDOM
+        .find((detail) => detail.variable === 'tower_height')
+        ?.value.toString() ?? '',
     },
     midhaulLink: [],
     backhaulLinks: [],
@@ -159,6 +167,50 @@ const getTowerTypesData = () => {
 };
 
 export const towerTypesDataFromDOM = getTowerTypesData();
+
+const towerDetailsDataSchema = z
+  .object({
+    variable: z.string(),
+    value: z.number(),
+    min: z.number(),
+    max: z.number(),
+    step: z.number(),
+    unit: z.string(),
+    element: z.string(),
+    category: z.string(),
+    seq: z.number(),
+    alt: z.number(),
+  })
+  .array();
+
+const getTowerDetailsData = () => {
+  const maybeTowerDetailsData = getDomJson('tower_details');
+  if (!maybeTowerDetailsData) return [];
+  return towerDetailsDataSchema.parse(maybeTowerDetailsData);
+};
+
+export const towerDetailsDataFromDOM = getTowerDetailsData();
+
+export const calculateLocationsAreaSqKm = (
+  locations: readonly NetworkElement[],
+): number =>
+  Number(
+    locations
+      .filter((location) => !location.isSoftDeleted)
+      .reduce((total, location) => total + Math.PI * location.radius ** 2, 0)
+      .toFixed(2),
+  );
+
+export const calculateOverrideHouseholds = (
+  locations: readonly NetworkElement[],
+): number =>
+  locations
+    .filter((location) => !location.isSoftDeleted)
+    .reduce((total, location) => {
+      if (location.use_model_households) return total;
+      const households = Number(location.households);
+      return Number.isFinite(households) ? total + households : total;
+    }, 0);
 
 const midhaulDataSchema = z
   .object({

@@ -5,6 +5,10 @@ import logging
 from library.helpers import get_text
 from library.app_logic import modeler
 from library.classes import BuilderInput, ModelerOutput, ModelerAPIOutput
+from library.geospatial import (
+    GeospatialConfigurationError,
+    GeospatialServiceError,
+)
 
 router = APIRouter()
 
@@ -13,14 +17,18 @@ templates = Jinja2Templates(directory="templates")
 
 
 # Function to handle modeler logic
-def modeler_logic(input_data: BuilderInput) -> ModelerOutput:
+async def modeler_logic(input_data: BuilderInput) -> ModelerOutput:
     logging.info("entering function modeler_logic")
     logging.info(f'Received input: {input_data.model_dump_json()}')
     try:
         # Call the builder function from helpers
-        return modeler(input_data)
+        return await modeler(input_data)
     except HTTPException:
         raise
+    except GeospatialConfigurationError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except GeospatialServiceError as e:
+        raise HTTPException(status_code=502, detail=str(e))
     except ValueError as e:
         logging.error(f"{e}")
         raise HTTPException(status_code=400, detail=str(e))
@@ -52,6 +60,7 @@ async def validate_model_input(input_data: BuilderInput) -> BuilderInput:
 async def modeler_api(input_data: BuilderInput = Body(
     ...,
     example={
+        "model_version": 2,
         "iso_3": "PER",
         "area_sqkm": 100,
         "households_total": 100,
@@ -69,8 +78,6 @@ async def modeler_api(input_data: BuilderInput = Body(
         "paf_sub_use": 4,
         "paf_non_sub_use": 9,
         "paf_facilities_charge": 0.25,
-        "terrain_type": "None",
-        "vegetation_type": "None",
         "provider_type": "provider_community",
         "oc_margin": 15,
         "other_opex": 7.5,
@@ -111,8 +118,14 @@ async def modeler_api(input_data: BuilderInput = Body(
         "locations": [
             {
                 "location_name": "Location 1",
+                "latitude": -12.0464,
+                "longitude": -77.0428,
+                "radius": 2,
+                "households": None,
                 "power_type": "power_mains_rel",
                 "tower_cost": 1000,
+                "tower_opex": 0,
+                "tower_height": 6,
                 "network_type": ["ISM FWA 5.8 GHz", "ISM Wi-Fi 2.4 GHz"],
                 "sectors": [1, 1],
                 "network_links": ["ISM FWA 500"],
@@ -122,8 +135,14 @@ async def modeler_api(input_data: BuilderInput = Body(
             },
             {
                 "location_name": "Location 2",
+                "latitude": -13.1631,
+                "longitude": -72.545,
+                "radius": 2,
+                "households": None,
                 "power_type": "power_mains_rel",
                 "tower_cost": 1000,
+                "tower_opex": 0,
+                "tower_height": 6,
                 "network_type": ["ISM FWA 5.8 GHz", "ISM Wi-Fi 2.4 GHz"],
                 "sectors": [1, 1],
                 "network_links": ["ISM FWA 500", "ISM FWA 500"],
@@ -133,8 +152,14 @@ async def modeler_api(input_data: BuilderInput = Body(
             },
             {
                 "location_name": "Location 3",
+                "latitude": -16.409,
+                "longitude": -71.5375,
+                "radius": 2,
+                "households": None,
                 "power_type": "power_solar",
                 "tower_cost": 1000,
+                "tower_opex": 0,
+                "tower_height": 6,
                 "network_type": ["ISM FWA 5.8 GHz", "ISM Wi-Fi 2.4 GHz"],
                 "sectors": [1, 1],
                 "network_links": ["ISM FWA 500"],
@@ -146,4 +171,4 @@ async def modeler_api(input_data: BuilderInput = Body(
     }
 )):
     # Use the modeler_logic function to get the result
-    return modeler_logic(input_data)
+    return await modeler_logic(input_data)

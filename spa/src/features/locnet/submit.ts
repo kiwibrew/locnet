@@ -13,6 +13,9 @@ import {
   newBlankBackhaulLink,
   newBlankLocation,
   newBlankNetworkType,
+  calculateLocationsAreaSqKm,
+  calculateOverrideHouseholds,
+  towerTypesDataFromDOM,
 } from '../form/NodeTypes/NetworkElements.utils';
 import type { NetworkElement } from '../form/NodeTypes/NetworkElements';
 import { generateRandomKey } from '../form/key';
@@ -79,12 +82,16 @@ export const locnetModelToBuilderInput = (
   }
 
   const model = removeSoftDeletes(locNetModel);
+  const modelWithoutLegacyProfiles = { ...model };
+  delete (modelWithoutLegacyProfiles as Record<string, unknown>).terrain_type;
+  delete (modelWithoutLegacyProfiles as Record<string, unknown>).vegetation_type;
 
   return {
-    ...model,
-    total_potential_users: model.total_potential_users
-      ? parseInt(model.total_potential_users.toString(), 10)
-      : 0,
+    ...modelWithoutLegacyProfiles,
+    model_version: 2,
+    area_sqkm: calculateLocationsAreaSqKm(model.locations ?? []),
+    households_total: calculateOverrideHouseholds(model.locations ?? []),
+    total_potential_users: undefined,
     locations: model.locations?.map(networkElementToLocationData) ?? [],
   };
 };
@@ -141,8 +148,13 @@ const networkElementToLocationData = (
   latitude: networkElement.latitude,
   longitude: networkElement.longitude,
   radius: networkElement.radius,
+  households: networkElement.use_model_households
+    ? null
+    : parseInt(networkElement.households, 10),
   power_type: networkElement.power_type ?? null,
   tower_cost: parseFloat(networkElement.towerType.cost_USD),
+  tower_opex: parseFloat(networkElement.towerType.opex_USD),
+  tower_height: parseFloat(networkElement.towerType.height_m),
   network_type: networkElement.networkTypes.map(
     (networkType) => networkType.type,
   ),
@@ -175,6 +187,8 @@ const locationDataToNetworkElement = (
   latitude: locationData.latitude,
   longitude: locationData.longitude,
   radius: locationData.radius ?? 2,
+  use_model_households: locationData.households == null,
+  households: locationData.households?.toString() ?? '',
   power_type: locationData.power_type,
   networkTypes: locationData.network_type.map(
     (network_type_item, index): NetworkElement['networkTypes'][number] => {
@@ -192,8 +206,10 @@ const locationDataToNetworkElement = (
     },
   ),
   towerType: {
-    name: '',
+    name: towerTypesDataFromDOM[0]?.variable ?? '',
     cost_USD: locationData.tower_cost?.toString() ?? '',
+    opex_USD: locationData.tower_opex?.toString() ?? '',
+    height_m: locationData.tower_height?.toString() ?? '',
   },
   midhaulLink: locationData.network_links.map(
     (network_link_item, index): NetworkElement['midhaulLink'][number] => {

@@ -48,7 +48,6 @@ test("can load sample data and generate output", async ({ page }) => {
   // Open all disclosures
   await page.getByTestId("sel_freq").click();
   await page.getByTestId("tech_paf").click();
-  await page.getByTestId("physical_characteristics").click();
   await page.getByTestId("provider_type").click();
   await page.getByTestId("expert_opt").click();
   await page.getByTestId("net_elements").click();
@@ -67,20 +66,14 @@ test("can load sample data and generate output", async ({ page }) => {
         // in the switch/case to allow assertNever() below to work
         // and assert that we've handled ALL keys
         break;
-      case "terrain_type":
-        await page.getByLabel("Terrain profile").selectOption(String(newValue));
-        break;
-      case "vegetation_type":
-        await page
-          .getByLabel("Vegetation profile")
-          .selectOption(String(newValue));
-        break;
+      case "model_version":
+      case "area_sqkm":
+      case "households_total":
       case "users_per_household":
       case "total_potential_users":
       case "paf_usd_hour":
         // uneditable field
         break;
-      case "area_sqkm":
       case "battery_age_derating":
       case "battery_cost_watt_hour":
       case "battery_dod":
@@ -99,7 +92,6 @@ test("can load sample data and generate output", async ({ page }) => {
       case "system_life":
       case "traffic_growth":
       case "year_1_traffic":
-      case "households_total":
       case "hh_size":
       case "pop_growth_rate":
       case "hh_income_week":
@@ -200,6 +192,12 @@ test("can load sample data and generate output", async ({ page }) => {
       await page
         .getByTestId(`location-${i}-towerTypeCost_USD`)
         .fill(networkElement.towerType.cost_USD);
+      await page
+        .getByTestId(`location-${i}-towerOpex`)
+        .fill(networkElement.towerType.opex_USD);
+      await page
+        .getByTestId(`location-${i}-towerHeight`)
+        .fill(networkElement.towerType.height_m);
     }
 
     for (let y = 0; y < networkElement.midhaulLink.length; y++) {

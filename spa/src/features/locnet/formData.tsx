@@ -94,14 +94,6 @@ export const locNetForm = {
             },
             {
               type: 'Disclosure',
-              labelIntlId: 'physical_characteristics',
-              children: [
-                { type: 'Terrain', modelPath: 'terrain_type' },
-                { type: 'Vegetation', modelPath: 'vegetation_type' },
-              ],
-            },
-            {
-              type: 'Disclosure',
               labelIntlId: 'provider_type',
               children: [{ type: 'OrganisationType', modelPath: 'provider_type' }],
             },

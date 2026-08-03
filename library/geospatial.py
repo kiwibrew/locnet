@@ -1,3 +1,5 @@
+import asyncio
+import hashlib
 import json
 import math
 from dataclasses import dataclass
@@ -8,6 +10,7 @@ import httpx
 from config import (
     ESAWC_API_TOKEN,
     ESAWC_API_URL,
+    GEOJSON_CACHE_DIRECTORY,
     GEOSPATIAL_API_TIMEOUT_SECONDS,
     GLO30_API_TOKEN,
     GLO30_API_URL,
@@ -15,6 +18,7 @@ from config import (
     WPOP_API_URL,
 )
 from library.classes import LocationData
+from library.geojson_cache import GeoJSONCache
 
 
 class GeospatialServiceError(RuntimeError):
@@ -58,6 +62,7 @@ class GeospatialClient:
         esawc_token: str,
         wpop_url: str,
         wpop_token: str,
+        viewshed_cache: GeoJSONCache | None = None,
     ):
         self.http_client = http_client
         self.glo30_url = glo30_url.rstrip("/")
@@ -66,6 +71,7 @@ class GeospatialClient:
         self.esawc_token = esawc_token
         self.wpop_url = wpop_url.rstrip("/")
         self.wpop_token = wpop_token
+        self.viewshed_cache = viewshed_cache
 
     @classmethod
     def from_config(cls) -> "GeospatialClient":
@@ -80,6 +86,7 @@ class GeospatialClient:
             esawc_token=ESAWC_API_TOKEN,
             wpop_url=WPOP_API_URL,
             wpop_token=WPOP_API_TOKEN,
+            viewshed_cache=GeoJSONCache(GEOJSON_CACHE_DIRECTORY),
         )
 
     async def __aenter__(self) -> "GeospatialClient":
@@ -132,31 +139,56 @@ class GeospatialClient:
         target_height_agl_m: float,
     ) -> dict[str, Any]:
         headers = self._headers("GLO-30", self.glo30_url, self.glo30_token)
+        request_body = {
+            "observer_coordinates": [float(longitude), float(latitude)],
+            "observer_height_agl_m": float(observer_height_agl_m),
+            "target_height_agl_m": float(target_height_agl_m),
+            "radius_m": float(radius_m),
+        }
+        cache_key = self._viewshed_cache_key(request_body)
+        if self.viewshed_cache is not None:
+            cached = await asyncio.to_thread(self.viewshed_cache.get, cache_key)
+            if cached is not None and self._is_valid_viewshed(cached):
+                return cached
+            if cached is not None:
+                await asyncio.to_thread(self.viewshed_cache.delete, cache_key)
+
         try:
             response = await self.http_client.post(
                 f"{self.glo30_url}/api/v1/viewsheds",
                 headers=headers,
-                json={
-                    "observer_coordinates": [longitude, latitude],
-                    "observer_height_agl_m": observer_height_agl_m,
-                    "target_height_agl_m": target_height_agl_m,
-                    "radius_m": radius_m,
-                },
+                json=request_body,
             )
         except httpx.HTTPError as exc:
             raise GeospatialServiceError("GLO-30 API request failed") from exc
 
         body = self._response_object("GLO-30", response)
-        properties = body.get("properties")
-        geometry = body.get("geometry")
-        if (
-            body.get("type") != "Feature"
-            or not isinstance(properties, dict)
-            or not isinstance(geometry, dict)
-            or not isinstance(properties.get("visible_area_sq_km"), (int, float))
-        ):
+        if not self._is_valid_viewshed(body):
             raise GeospatialServiceError("GLO-30 API returned invalid GeoJSON")
+        if self.viewshed_cache is not None:
+            await asyncio.to_thread(self.viewshed_cache.set, cache_key, body)
         return body
+
+    def _viewshed_cache_key(self, request_body: Mapping[str, Any]) -> str:
+        key_data = json.dumps(
+            {
+                "service_url": self.glo30_url,
+                "request": request_body,
+            },
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
+        return hashlib.sha256(key_data).hexdigest()
+
+    @staticmethod
+    def _is_valid_viewshed(body: Mapping[str, Any]) -> bool:
+        properties = body.get("properties")
+        return (
+            body.get("type") == "Feature"
+            and isinstance(properties, dict)
+            and isinstance(body.get("geometry"), dict)
+            and isinstance(properties.get("visible_area_sq_km"), (int, float))
+        )
 
     async def land_cover_fractions(
         self, geojson: Mapping[str, Any]

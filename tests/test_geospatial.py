@@ -1,6 +1,7 @@
 import json
 import math
 import unittest
+from tempfile import TemporaryDirectory
 
 import httpx
 
@@ -9,6 +10,7 @@ from library.geospatial import (
     GeospatialClient,
     calculate_coverage_population,
 )
+from library.geojson_cache import GeoJSONCache
 
 
 def geojson(visible_area_sq_km):
@@ -222,6 +224,40 @@ class GeospatialClientContractTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(population_request.url.params["iso3"], "NZL")
         self.assertIn(b'name="geojson_file"', population_body)
+
+    async def test_viewshed_is_reused_from_the_disk_cache(self):
+        requests = []
+
+        async def handler(request):
+            requests.append(request)
+            return httpx.Response(200, json=geojson(7.5))
+
+        with TemporaryDirectory() as directory:
+            transport = httpx.MockTransport(handler)
+            async with httpx.AsyncClient(transport=transport) as http_client:
+                client = GeospatialClient(
+                    http_client,
+                    glo30_url="https://glo30.example",
+                    glo30_token="glo-token",
+                    esawc_url="https://esawc.example",
+                    esawc_token="esa-token",
+                    wpop_url="https://wpop.example",
+                    wpop_token="pop-token",
+                    viewshed_cache=GeoJSONCache(directory),
+                )
+                arguments = {
+                    "longitude": 174.76,
+                    "latitude": -36.85,
+                    "radius_m": 2500,
+                    "observer_height_agl_m": 30,
+                    "target_height_agl_m": 2,
+                }
+
+                first = await client.viewshed(**arguments)
+                second = await client.viewshed(**arguments)
+
+        self.assertEqual(first, second)
+        self.assertEqual(len(requests), 1)
 
 
 if __name__ == "__main__":

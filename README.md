@@ -52,6 +52,7 @@ Prerequisites
 ## Environment and configuration
 - The application depends on an API connection to a database holding all of its menus — please contact the maintainer to set up an API key for read access to that data.
 - Copy `locnet.env` (or `.env` template) and provide values for required variables. At minimum you will need read access credentials for the menu/lookup API. Coverage calculations also require `GLO30_API_URL`, `GLO30_API_TOKEN`, `ESAWC_API_URL`, `ESAWC_API_TOKEN`, `WPOP_API_URL`, and `WPOP_API_TOKEN`.
+- Generated viewsheds are cached in `cache/geojson` by default; set `GEOJSON_CACHE_DIRECTORY` to a persistent volume path to override it. Entries expire after 30 days. When the cache exceeds 1 GB, least-recently-used entries are removed first.
 
 Install and run (local)
 1) Create and activate a virtual environment

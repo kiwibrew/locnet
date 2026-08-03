@@ -1,11 +1,14 @@
 from turtle import done
 from pathlib import Path
+from xml.etree.ElementTree import Element, SubElement
 
 from fastapi import FastAPI, Request, Form, HTTPException, Query
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse
 from markdown import markdown
+from markdown.extensions import Extension
+from markdown.treeprocessors import Treeprocessor
 from pydantic import BaseModel
 from routers import lookups
 from routers.builder import router as builder_router
@@ -20,6 +23,46 @@ def render_markdown_document(filename: str) -> str:
     """Read a local Markdown document and convert it to HTML for a template."""
     markdown_source = (DOCUMENTS_DIRECTORY / filename).read_text(encoding="utf-8")
     return markdown(markdown_source, extensions=["extra", "toc"])
+
+
+class FaqAccordionTreeprocessor(Treeprocessor):
+    """Group level-two headings and their content into FAQ disclosures."""
+
+    def run(self, root: Element) -> None:
+        children = list(root)
+        for child in children:
+            root.remove(child)
+
+        answer = None
+        for child in children:
+            if child.tag == "h2":
+                details = SubElement(
+                    root, "details", {"class": "faq-item", "name": "faq"}
+                )
+                summary = SubElement(details, "summary")
+                summary.append(child)
+                answer = SubElement(details, "div", {"class": "faq-answer"})
+            elif answer is None:
+                root.append(child)
+            else:
+                answer.append(child)
+
+
+class FaqAccordionExtension(Extension):
+    def extendMarkdown(self, md) -> None:
+        md.treeprocessors.register(
+            FaqAccordionTreeprocessor(md), "faq_accordion", 1
+        )
+
+
+def render_faq_document(filename: str) -> str:
+    """Render a Markdown FAQ with level-two headings as accordion items."""
+    markdown_source = (DOCUMENTS_DIRECTORY / filename).read_text(encoding="utf-8")
+    return markdown(
+        markdown_source,
+        extensions=["extra", "toc", FaqAccordionExtension()],
+    )
+
 
 app = FastAPI(title='Community Network Modeler',
               description='An application to model simple community networks',
@@ -139,7 +182,7 @@ async def faq_page(request: Request, lang: str = 'en', embedded: bool = Query(Fa
         text_data = get_text()
         selected_text = {item['element']: item[lang] for item in text_data}
 
-        faq_content = render_markdown_document("faq.md")
+        faq_content = render_faq_document("faq.md")
 
         return templates.TemplateResponse("faq.html",
                                           {"request": request,

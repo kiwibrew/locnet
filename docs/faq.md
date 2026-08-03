@@ -44,3 +44,22 @@ The model reports the calculated battery, charger/inverter, and solar cost compo
 ### Important limitations
 
 This is a planning model, not a detailed electrical-system design. It uses long-term monthly climatology and conservative worst-month/worst-period assumptions. It does not model local shading, terrain effects on irradiation, daily battery cycling, panel orientation and soiling, or seasonal operation in intermittent supply situations. These factors can materially change the best design, particularly at high and low latitudes. Use a site survey, local energy data, and a detailed engineering design before procurement or construction.
+
+## My model doesn't cover as many people as I expect it should, why is that?
+
+There are a few reasons this could happen. If the viewshed shows you've covered an area but the Population geographic coverage is too low, it's likely the WorldPop API data is incorrect for your location. You should untick "Allow model to determine households" and enter your own value for each location where the population is incorrect.
+
+If your population geographic coverage is low because your viewshed is very small, try raising up the antenna another five or ten meters. This can help when there are nearby obstructions like buildings or trees.
+
+## Why is it so slow to run a new model?
+
+New models fetch large data tiles from three different APIs, and sometimes this can take a minute or two. Once you've run a model in a particular area, future runs will be fast because the LocNet server will have the data cached.
+
+## What determines the default GPS point when adding a location?
+
+The application tries to place its pin in the centre of the country chosen. This was determined by an algorothm, so if you find the location was wrong, open a ticket in Github and we'll fix it!
+
+## What does the Site Structure option in a location do; it's not clear if anything changes if you choose "Use a Building" or "Tower/mast/utility pole".
+
+This is a legacy option that no longer impacts the model. It's in the directions for use of the application so it's being left in for now. Some day it will disappear.
+

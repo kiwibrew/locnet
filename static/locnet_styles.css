@@ -124,3 +124,38 @@ tr.shown td.details-control {
   outline: 2px solid #058;
   outline-offset: 2px;
 }
+
+.faq-item {
+  margin: 0.75rem 0;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+}
+
+.faq-item > summary {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+}
+
+.faq-item > summary:hover {
+  background: #f2f2f2;
+}
+
+.faq-item > summary:focus-visible {
+  outline: 2px solid #058;
+  outline-offset: 2px;
+}
+
+.faq-item > summary h2 {
+  display: inline;
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.faq-answer {
+  padding: 0 1rem 1rem;
+  border-top: 1px solid #ddd;
+}
+
+.faq-answer > :last-child {
+  margin-bottom: 0;
+}

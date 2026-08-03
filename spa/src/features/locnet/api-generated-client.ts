@@ -356,6 +356,13 @@ export type MidhaulDetail = {
   element: string;
 };
 
+export type LocationCoverageMap = {
+  location_name: string;
+  latitude: number;
+  longitude: number;
+  geojson: object;
+};
+
 export type ModelQuery = {
   iso_3: string;
   lang: string;
@@ -378,6 +385,7 @@ export type ModelerAPIOutput = {
   pbom_table_columns?: object[] | null;
   bom_table_rows?: object[] | null;
   bom_table_columns?: object[] | null;
+  coverage_maps?: LocationCoverageMap[];
 };
 
 export type PowerItem = {

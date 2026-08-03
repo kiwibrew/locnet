@@ -33,6 +33,7 @@ import { RenderVegetation } from './NodeTypes/Vegetation';
 import { RenderDataTable } from './NodeTypes/DataTable';
 import { RenderObjectTable } from './NodeTypes/ObjectTable';
 import { RenderExportFiles } from './NodeTypes/ExportFiles';
+import { RenderExportCoverageMaps } from './NodeTypes/ExportCoverageMaps';
 
 type Props = NodeProps<Node>;
 
@@ -102,6 +103,8 @@ export const RenderNode = (props: Props) => {
       return <RenderObjectTable node={node} formPath={formPath} />;
     case 'ExportFiles':
       return <RenderExportFiles node={node} formPath={formPath} />;
+    case 'ExportCoverageMaps':
+      return <RenderExportCoverageMaps node={node} formPath={formPath} />;
   }
 
   assertNever(node);

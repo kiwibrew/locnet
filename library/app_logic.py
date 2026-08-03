@@ -1,5 +1,6 @@
 import logging
 import math
+from copy import deepcopy
 import numpy_financial as npf
 import numpy as np
 import pandas as pd
@@ -173,6 +174,7 @@ async def modeler(
     midhaul_rows = []
     backhaul_rows = []
     power_rows = []
+    coverage_maps = []
     tower_costs = []
     location_population_estimates = []
     tech_use = []  # A list that will store all technology types in use
@@ -255,6 +257,7 @@ async def modeler(
         power_type = location.power_type
         location_watts = 0 # Start a counter for all power use per location
         location_population_estimate = 0.0
+        location_coverage_features = []
         location_area_sqkm = pi * location.radius ** 2
         logging.info(f"power type for this location is {power_type}")
         latitude = location.latitude
@@ -291,6 +294,16 @@ async def modeler(
                 location_population_estimate,
                 pop_covered,
             )
+            coverage_feature = deepcopy(coverage.geojson)
+            properties = coverage_feature.get("properties")
+            if not isinstance(properties, dict):
+                properties = {}
+            coverage_feature["properties"] = {
+                **properties,
+                "network_type": nt,
+                "technology": tech["technology"],
+            }
+            location_coverage_features.append(coverage_feature)
 
             # Calculate the number of end users supported per UE
             if tech["technology"] in ["Mobile", "PAF"]:
@@ -448,6 +461,18 @@ async def modeler(
                 "user_monthly_traffic": round(user_monthly_traffic)
 
             })
+
+        coverage_maps.append(
+            {
+                "location_name": location.location_name,
+                "latitude": location.latitude,
+                "longitude": location.longitude,
+                "geojson": {
+                    "type": "FeatureCollection",
+                    "features": location_coverage_features,
+                },
+            }
+        )
 
         location_population_estimates.append(
             {
@@ -2512,6 +2537,7 @@ async def modeler(
         "bom_table_rows": bom_table_rows,
         "pbom_table_columns": pbom_table_columns,
         "pbom_table_rows": pbom_table_rows,
+        "coverage_maps": coverage_maps,
         "net_summary_table_columns": net_summary_table_columns,
         "net_summary_table_rows": net_summary_table_rows
     }

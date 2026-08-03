@@ -33,6 +33,7 @@ import { ExportScatterChartSchema } from './NodeTypes/ExportScatterChart';
 import { DataTableSchema } from './NodeTypes/DataTable';
 import { ObjectTableSchema } from './NodeTypes/ObjectTable';
 import { ExportFilesSchema } from './NodeTypes/ExportFiles';
+import { ExportCoverageMapsSchema } from './NodeTypes/ExportCoverageMaps';
 
 export const NodeSchema = z.union([
   TextSchema,
@@ -65,7 +66,8 @@ export const NodeSchema = z.union([
   ExportDetailedResultsSchema,
   ExportScatterChartSchema,
   ObjectTableSchema,
-  ExportFilesSchema
+  ExportFilesSchema,
+  ExportCoverageMapsSchema,
 ]);
 
 export type Node = z.infer<typeof NodeSchema>;

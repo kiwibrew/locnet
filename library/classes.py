@@ -192,6 +192,13 @@ class BuilderInput(BaseModel):
         return self
 
 
+class LocationCoverageMap(BaseModel):
+    location_name: str
+    latitude: float
+    longitude: float
+    geojson: Dict[str, Any]
+
+
 # Define the output data model
 class BuilderOutput(BaseModel):
     access_cost: Optional[int] = None
@@ -302,6 +309,8 @@ class ModelerOutput(BaseModel):
     pbom_table_columns: Optional[List[Dict[str, str]]] = None
     bom_table_rows: Optional[List[Dict[str, Any]]] = None
     bom_table_columns: Optional[List[Dict[str, str]]] = None
+    coverage_maps: List[LocationCoverageMap] = Field(default_factory=list)
+
 
 class ModelerAPIOutput(BaseModel):
     detailed_results: List[Dict[str, Any]]
@@ -320,6 +329,8 @@ class ModelerAPIOutput(BaseModel):
     pbom_table_columns: Optional[List[Dict[str, str]]] = None
     bom_table_rows: Optional[List[Dict[str, Any]]] = None
     bom_table_columns: Optional[List[Dict[str, str]]] = None
+    coverage_maps: List[LocationCoverageMap] = Field(default_factory=list)
+
 
 # Power Model Input
 class PowerModelInput(BaseModel):

@@ -168,6 +168,10 @@ test("can load sample data and generate output", async ({ page }) => {
         .fill(networkElement.location_name);
     }
 
+    // Keep this browser test independent from the external population service.
+    await page.getByTestId(`location-${i}-model-households`).uncheck();
+    await page.getByTestId(`location-${i}-households`).fill("100");
+
     for (let y = 0; y < networkElement.networkTypes.length; y++) {
       const networkType = networkElement.networkTypes[y];
       await page.getByTestId(`location-${i}-add-network-type`).click();
@@ -234,9 +238,20 @@ test("can load sample data and generate output", async ({ page }) => {
 
   await page.getByTestId("calculate_network").click();
 
-  await page.waitForTimeout(2000);
+  await expect(page.getByTestId("report")).toHaveText("Report", {
+    timeout: 120_000,
+  });
 
-  await expect(page.getByTestId("report")).toHaveText("Report");
+  const coverageMaps = page.getByTestId("coverage-maps");
+  await expect(coverageMaps).toBeVisible();
+  await expect(coverageMaps.getByTestId(/^coverage-map-/)).toHaveCount(
+    locnetModel.locations.length,
+  );
+  await expect(
+    coverageMaps.locator('[data-pdf-map-status="ready"]'),
+  ).toHaveCount(locnetModel.locations.length, { timeout: 30_000 });
+  // Spreadsheet serializers only include explicitly marked data sheets.
+  await expect(coverageMaps.locator("[data-sheet]")).toHaveCount(0);
 
   const expectedDownloads = [
     ["Download CSV", /\.csv$/],
@@ -250,5 +265,20 @@ test("can load sample data and generate output", async ({ page }) => {
       page.getByRole("button", { name: buttonName }).click(),
     ]);
     expect(download.suggestedFilename()).toMatch(extension);
+
+    if (buttonName === "Download CSV" || buttonName === "Download PDF") {
+      const stream = await download.createReadStream();
+      const chunks: Buffer[] = [];
+      for await (const chunk of stream) chunks.push(Buffer.from(chunk));
+      const contents = Buffer.concat(chunks);
+      if (buttonName === "Download CSV") {
+        expect(contents.toString("utf8")).not.toContain(
+          "Location Coverage Maps",
+        );
+      } else {
+        // MapLibre canvases are replaced with PNG snapshots for PDF export.
+        expect(contents.toString("latin1")).toContain("/Subtype /Image");
+      }
+    }
   }
 });

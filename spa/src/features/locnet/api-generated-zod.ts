@@ -101,6 +101,13 @@ export const midhaulDetailSchema = z.object({
     element: z.string()
 });
 
+export const locationCoverageMapSchema = z.object({
+    location_name: z.string(),
+    latitude: z.number(),
+    longitude: z.number(),
+    geojson: z.record(z.string(), z.any())
+});
+
 export const modelQuerySchema = z.object({
     iso_3: z.string(),
     lang: z.string()
@@ -122,7 +129,8 @@ export const modelerApiOutputSchema = z.object({
     pbom_table_rows: z.array(z.record(z.string(), z.any())).optional().nullable(),
     pbom_table_columns: z.array(z.record(z.string(), z.any())).optional().nullable(),
     bom_table_rows: z.array(z.record(z.string(), z.any())).optional().nullable(),
-    bom_table_columns: z.array(z.record(z.string(), z.any())).optional().nullable()
+    bom_table_columns: z.array(z.record(z.string(), z.any())).optional().nullable(),
+    coverage_maps: z.array(locationCoverageMapSchema).optional()
 });
 
 export const powerItemSchema = z.object({

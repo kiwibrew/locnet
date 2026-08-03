@@ -1,11 +1,8 @@
 import {
   Map as MapLibreMap,
   Marker,
-  setWorkerUrl,
   type GeoJSONSource,
 } from 'maplibre-gl';
-import mapLibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
-import 'maplibre-gl/dist/maplibre-gl.css';
 import type { Feature, Polygon } from 'geojson';
 import {
   useCallback,
@@ -26,12 +23,8 @@ import type { NetworkElement } from './NetworkElements';
 import type { BoundsResponse } from '../../locnet/api-generated-client';
 import { useBoundsData } from './useBoundsData';
 import { canUseViewportAsMaxBounds } from './LocationPicker.utils';
+import { getMapStyleUrl } from './mapLibre';
 import styles from './LocationPicker.module.css';
-
-// MapLibre resolves its worker relative to the application bundle, but Vite
-// does not discover that runtime-generated URL. Importing the worker as a Vite
-// worker entry emits it (and its dependencies) and gives MapLibre a valid URL.
-setWorkerUrl(mapLibreWorkerUrl);
 
 // Countries that straddle the antimeridian. For these we skip longitude bounds
 // validation (see issue) because their bounding box spans -180..180.
@@ -97,18 +90,6 @@ const getRadiusCircleBounds = (
     [Math.min(...longitudes), Math.min(...latitudes)],
     [Math.max(...longitudes), Math.max(...latitudes)],
   ];
-};
-
-// The style URL is provided by the backend (see /api/map_config) so the tile
-// provider and its API key stay server-side. Cache the lookup for the session.
-let mapStyleUrlPromise: Promise<string> | undefined;
-const getMapStyleUrl = (): Promise<string> => {
-  if (!mapStyleUrlPromise) {
-    mapStyleUrlPromise = fetch('/api/map_config')
-      .then((response) => response.json())
-      .then((body: { style_url: string }) => body.style_url);
-  }
-  return mapStyleUrlPromise;
 };
 
 const isAntimeridianCountry = (bounds: BoundsResponse): boolean =>

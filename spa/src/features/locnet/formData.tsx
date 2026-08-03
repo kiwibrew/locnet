@@ -212,6 +212,11 @@ export const locNetForm = {
           rowsFormPath: `api.modelerAPIOutput.${'pbom_table_rows' satisfies keyof ModelerAPIOutput}`,
           isSortable: false,
         },
+        {
+          type: 'ExportCoverageMaps',
+          labelText: 'Location Coverage Maps',
+          coverageMapsFormPath: `api.modelerAPIOutput.${'coverage_maps' satisfies keyof ModelerAPIOutput}`,
+        },
       ],
     },
   ],

@@ -10,3 +10,5 @@ cache
 /.aiassistant/rules/general.md
 /.aiassistant/
 /.ai/
+/playwright/chrome/
+/playwright/chromium/

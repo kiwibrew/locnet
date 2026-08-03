@@ -25,6 +25,7 @@ import { useIntlIdOrText } from '../Intl.utils';
 import type { NetworkElement } from './NetworkElements';
 import type { BoundsResponse } from '../../locnet/api-generated-client';
 import { useBoundsData } from './useBoundsData';
+import { canUseViewportAsMaxBounds } from './LocationPicker.utils';
 import styles from './LocationPicker.module.css';
 
 // MapLibre resolves its worker relative to the application bundle, but Vite
@@ -330,7 +331,15 @@ export const RenderLocationPicker = ({
           // Use the viewport at two levels farther out as the map boundary.
           // This preserves panning limits while permitting the requested zoom.
           map.jumpTo({ center: countryCenter, zoom: minZoom });
-          map.setMaxBounds(map.getBounds());
+          const zoomedOutBounds = map.getBounds();
+          // MapLibre folds max bounds wider than one world modulo 360 degrees,
+          // producing an unrelated longitude slice. In that case, leave
+          // panning unconstrained; marker placement remains country-bounded.
+          map.setMaxBounds(
+            canUseViewportAsMaxBounds(zoomedOutBounds)
+              ? zoomedOutBounds
+              : null,
+          );
           map.jumpTo({ center: countryCenter, zoom: countryZoom });
           map.setMinZoom(minZoom);
 

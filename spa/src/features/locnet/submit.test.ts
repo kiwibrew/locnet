@@ -82,11 +82,9 @@ test('sends a null household override when modelled population is selected', () 
   expect(input.households_total).toBe(0);
 });
 
-test('shows the server error and completes a failed model submission', async () => {
+test('returns the server error and completes a failed model submission', async () => {
   const message =
     "The model could not be processed because an API doesn't have data on the location";
-  const alert = vi.fn();
-  vi.stubGlobal('alert', alert);
   vi.stubGlobal('location', { origin: 'https://locnet.test' });
   vi.stubGlobal(
     'fetch',
@@ -99,7 +97,5 @@ test('shows the server error and completes a failed model submission', async () 
 
   const result = await submitModel({} as BuilderInput);
 
-  expect(alert).toHaveBeenCalledOnce();
-  expect(alert).toHaveBeenCalledWith(message);
   expect(result).toEqual({ type: 'error', message });
 });

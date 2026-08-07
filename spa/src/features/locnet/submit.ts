@@ -66,7 +66,6 @@ export const submitModel = async (
     if (e && typeof e === 'object' && 'detail' in e) {
       console.error('Server response', e);
       message = String(e.detail);
-      alert(message);
     } else {
       console.error(e);
     }

@@ -4,6 +4,15 @@
   justify-content: space-between;
 }
 
+.modelSubmissionError {
+  margin: 1rem var(--page-padding-x) 0;
+  padding: 0.75rem 1rem;
+  border: solid 2px var(--error-color);
+  background-color: var(--error-pale-color);
+  color: #700;
+  font-weight: 600;
+}
+
 :global(.print-mode) .page {
   min-height: auto;
   justify-content: start;

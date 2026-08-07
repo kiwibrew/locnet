@@ -2,7 +2,11 @@ import { afterEach, expect, test, vi } from 'vitest';
 import type { NetworkElement } from '../form/NodeTypes/NetworkElements';
 import type { LocNetModel } from './model';
 import type { BuilderInput } from './api-generated-client';
-import { locnetModelToBuilderInput, submitModel } from './submit';
+import {
+  GEOSPATIAL_API_ERROR_MESSAGE,
+  locnetModelToBuilderInput,
+  submitModel,
+} from './submit';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -82,11 +86,8 @@ test('sends a null household override when modelled population is selected', () 
   expect(input.households_total).toBe(0);
 });
 
-test('shows the server error and completes a failed model submission', async () => {
-  const message =
-    "The model could not be processed because an API doesn't have data on the location";
-  const alert = vi.fn();
-  vi.stubGlobal('alert', alert);
+test('returns the server error and completes a failed model submission', async () => {
+  const message = GEOSPATIAL_API_ERROR_MESSAGE;
   vi.stubGlobal('location', { origin: 'https://locnet.test' });
   vi.stubGlobal(
     'fetch',
@@ -99,7 +100,26 @@ test('shows the server error and completes a failed model submission', async () 
 
   const result = await submitModel({} as BuilderInput);
 
-  expect(alert).toHaveBeenCalledOnce();
-  expect(alert).toHaveBeenCalledWith(message);
   expect(result).toEqual({ type: 'error', message });
+});
+
+test('returns the geospatial message for a non-JSON 502 response', async () => {
+  vi.stubGlobal('location', { origin: 'https://locnet.test' });
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue(
+      new Response('<html>Bad Gateway</html>', {
+        status: 502,
+        statusText: 'Bad Gateway',
+      }),
+    ),
+  );
+  vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+  const result = await submitModel({} as BuilderInput);
+
+  expect(result).toEqual({
+    type: 'error',
+    message: GEOSPATIAL_API_ERROR_MESSAGE,
+  });
 });

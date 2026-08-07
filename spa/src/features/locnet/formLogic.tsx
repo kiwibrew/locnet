@@ -100,7 +100,7 @@ export const locNetFormResolver: LocNetFormValueResolver = ({
       'type' in modelerAPIOutput &&
       modelerAPIOutput.type === 'error'
     ) {
-      // do nothing. There should have been an alert() shown to the user
+      // The error is displayed above the form by ModelSubmissionError.
     } else {
       immerForm.nodes[4].isOpen = true;
     }

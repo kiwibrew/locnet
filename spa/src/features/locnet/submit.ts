@@ -26,6 +26,9 @@ declare global {
   }
 }
 
+export const GEOSPATIAL_API_ERROR_MESSAGE =
+  "The model could not be processed because an API doesn't have data on the location";
+
 export const useLocNetServerSubmit = () => {
   const handleSubmit: SubmitHandler<EditableLocNetForm, EditableLocNetModel> =
     useCallback((props) => {
@@ -63,10 +66,15 @@ export const submitModel = async (
     return modelResult;
   } catch (e) {
     let message = String(e);
-    if (e && typeof e === 'object' && 'detail' in e) {
+    if (e instanceof Response) {
+      console.error('Non-JSON server response', e);
+      message =
+        e.status === 502
+          ? GEOSPATIAL_API_ERROR_MESSAGE
+          : `The server returned HTTP ${e.status}${e.statusText ? ` ${e.statusText}` : ''}.`;
+    } else if (e && typeof e === 'object' && 'detail' in e) {
       console.error('Server response', e);
       message = String(e.detail);
-      alert(message);
     } else {
       console.error(e);
     }

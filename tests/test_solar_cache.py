@@ -60,7 +60,7 @@ class SolarCacheTests(unittest.TestCase):
         cache_record = {
             "min_sun": 3.1,
             "max_no_sun_days": 4.09,
-            "annual_no_sun_days": 165.378,
+            "annual_no_sun_days": 165.38,
             "avg_temp": 10.88,
             "min_temp": 5.64,
             "max_temp": 16.41,
@@ -85,7 +85,7 @@ class SolarCacheTests(unittest.TestCase):
                 patch("library.supply.requests.post", return_value=post_response) as cache_post:
             solar_stats = get_solar_statistics(-36.854, 174.764)
 
-        self.assertAlmostEqual(solar_stats["annual_no_sun_days"], 165.378)
+        self.assertEqual(solar_stats["annual_no_sun_days"], 165.38)
         self.assertEqual(solar_stats["avg_temp"], 10.88)
         self.assertEqual(solar_stats["min_temp"], 5.64)
         self.assertEqual(solar_stats["max_temp"], 16.41)
@@ -95,13 +95,13 @@ class SolarCacheTests(unittest.TestCase):
         self.assertIn("/tables/Solar_cache/records", cache_post.call_args.args[0])
         self.assertEqual(stored_fields["latitude"], -36.85)
         self.assertEqual(stored_fields["longitude"], 174.76)
-        self.assertAlmostEqual(stored_fields["annual_no_sun_days"], 165.378)
+        self.assertEqual(stored_fields["annual_no_sun_days"], 165.38)
 
     def test_incomplete_cache_record_is_replaced_with_nasa_data(self):
         incomplete_cache_record = {
             "min_sun": 3.1,
             "max_no_sun_days": 4.09,
-            "annual_no_sun_days": 165.378,
+            "annual_no_sun_days": 165.38,
             "avg_temp": 10.88,
             "min_temp": 5.64,
         }

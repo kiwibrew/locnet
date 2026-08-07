@@ -1,7 +1,13 @@
-import { expect, test } from 'vitest';
+import { afterEach, expect, test, vi } from 'vitest';
 import type { NetworkElement } from '../form/NodeTypes/NetworkElements';
 import type { LocNetModel } from './model';
-import { locnetModelToBuilderInput } from './submit';
+import type { BuilderInput } from './api-generated-client';
+import { locnetModelToBuilderInput, submitModel } from './submit';
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
 
 const location = (
   overrides: Partial<NetworkElement> = {},
@@ -74,4 +80,26 @@ test('sends a null household override when modelled population is selected', () 
 
   expect(input.locations?.[0]?.households).toBeNull();
   expect(input.households_total).toBe(0);
+});
+
+test('shows the server error and completes a failed model submission', async () => {
+  const message =
+    "The model could not be processed because an API doesn't have data on the location";
+  const alert = vi.fn();
+  vi.stubGlobal('alert', alert);
+  vi.stubGlobal('location', { origin: 'https://locnet.test' });
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue({
+      ok: false,
+      json: async () => ({ detail: message }),
+    }),
+  );
+  vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+  const result = await submitModel({} as BuilderInput);
+
+  expect(alert).toHaveBeenCalledOnce();
+  expect(alert).toHaveBeenCalledWith(message);
+  expect(result).toEqual({ type: 'error', message });
 });

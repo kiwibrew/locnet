@@ -6,6 +6,7 @@ from library.helpers import get_text
 from library.app_logic import modeler
 from library.classes import BuilderInput, ModelerOutput, ModelerAPIOutput
 from library.geospatial import (
+    GEOSPATIAL_API_ERROR_DETAIL,
     GeospatialConfigurationError,
     GeospatialServiceError,
 )
@@ -28,7 +29,11 @@ async def modeler_logic(input_data: BuilderInput) -> ModelerOutput:
     except GeospatialConfigurationError as e:
         raise HTTPException(status_code=503, detail=str(e))
     except GeospatialServiceError as e:
-        raise HTTPException(status_code=502, detail=str(e))
+        logging.error("Geospatial API failure: %s", e)
+        raise HTTPException(
+            status_code=502,
+            detail=GEOSPATIAL_API_ERROR_DETAIL,
+        ) from e
     except ValueError as e:
         logging.error(f"{e}")
         raise HTTPException(status_code=400, detail=str(e))

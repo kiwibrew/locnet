@@ -53,7 +53,7 @@ export const useLocNetServerSubmit = () => {
   return handleSubmit;
 };
 
-const submitModel = async (
+export const submitModel = async (
   builderInput: BuilderInput,
 ): Promise<EditableLocNetForm['api']['modelerAPIOutput']> => {
   const api = new ApiClient();
@@ -66,7 +66,7 @@ const submitModel = async (
     if (e && typeof e === 'object' && 'detail' in e) {
       console.error('Server response', e);
       message = String(e.detail);
-      alert(`Server response: ${e.detail}`);
+      alert(message);
     } else {
       console.error(e);
     }

@@ -21,6 +21,11 @@ from library.classes import LocationData
 from library.geojson_cache import GeoJSONCache
 
 
+GEOSPATIAL_API_ERROR_DETAIL = (
+    "The model could not be processed because an API doesn't have data on the location"
+)
+
+
 class GeospatialServiceError(RuntimeError):
     pass
 

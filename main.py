@@ -17,6 +17,15 @@ import logging
 
 
 DOCUMENTS_DIRECTORY = Path(__file__).resolve().parent / "docs"
+EXAMPLES_DIRECTORY = DOCUMENTS_DIRECTORY / "examples"
+
+
+def list_example_filenames(directory: Path) -> list[str]:
+    """Return JSON example filenames in display order."""
+    return sorted(
+        (path.name for path in directory.glob("*.json") if path.is_file()),
+        key=str.casefold,
+    )
 
 
 def render_markdown_document(filename: str) -> str:
@@ -102,11 +111,14 @@ async def get_spa(request: Request, lang: str = 'en', ajax: bool = Query(False))
             # Return only the text data as JSON for AJAX requests
             return JSONResponse({"text": selected_text, "selected_language": lang})
 
+        example_filenames = list_example_filenames(EXAMPLES_DIRECTORY)
+
         return spaTemplates.TemplateResponse("index.html",
                                           {"request": request,
                                            "countries": country_data,
                                            "text": text_data,
                                            "selected_language": lang,
+                                           "example_filenames": example_filenames,
                                            "frequencies": frequencies,
                                            "technologies": technologies,
                                            "network_types": all_net_types,

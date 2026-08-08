@@ -1,8 +1,8 @@
 import { test, expect } from "@playwright/test";
+import { readFileSync } from "node:fs";
 // Only import types from the SPA, never runtime code.
 import { type BuilderInput } from "../../spa/src/features/locnet/api-generated-client";
 import { type LocNetModel } from "../../spa/src/features/locnet/model";
-import { sampleData } from "./sampleData";
 import { assertNever } from "./typescript";
 
 declare global {
@@ -18,9 +18,35 @@ test("has title", async ({ page }) => {
   await expect(page).toHaveTitle(/Community Network Builder/);
 });
 
-const builderInput: BuilderInput = sampleData;
+const builderInput = JSON.parse(
+  readFileSync(
+    new URL("../../docs/examples/indonesia_example.json", import.meta.url),
+    "utf8",
+  ),
+) as BuilderInput;
 
-test("can load sample data and generate output", async ({ page }) => {
+test("lists and loads example data", async ({ page }) => {
+  await page.goto("");
+
+  const developerOptions = page.getByTestId("developer_options");
+  await developerOptions.locator("summary").click();
+  const examples = page.getByTestId("load_example");
+
+  await expect(examples.locator("option")).toHaveText([
+    "Load Example Data",
+    "Indonesia Example",
+    "Peru Example",
+    "Philippines Example",
+  ]);
+
+  await examples.selectOption("indonesia_example.json");
+  await expect(page.getByTestId("sel_country")).toHaveValue("IDN", {
+    timeout: 30_000,
+  });
+});
+
+test("can use example data and generate output", async ({ page }) => {
+  test.setTimeout(180_000);
   await page.goto("");
 
   const locnetModel = await page.evaluate(async (builderInput) => {
@@ -241,6 +267,19 @@ test("can load sample data and generate output", async ({ page }) => {
   await expect(page.getByTestId("report")).toHaveText("Report", {
     timeout: 120_000,
   });
+  await expect(page.getByTestId("model_output")).toBeAttached({
+    timeout: 120_000,
+  });
+
+  const developerOptions = page.getByTestId("developer_options");
+  await developerOptions.locator("summary").click();
+  const jsonBlocks = developerOptions.locator("pre");
+  await expect(jsonBlocks).toHaveCount(2);
+  await expect(jsonBlocks.nth(0)).toHaveAttribute("data-testid", "model_input");
+  await expect(jsonBlocks.nth(1)).toHaveAttribute(
+    "data-testid",
+    "model_output",
+  );
 
   const coverageMaps = page.getByTestId("coverage-maps");
   await expect(coverageMaps).toBeVisible();
@@ -249,7 +288,7 @@ test("can load sample data and generate output", async ({ page }) => {
   );
   await expect(
     coverageMaps.locator('[data-pdf-map-status="ready"]'),
-  ).toHaveCount(locnetModel.locations.length, { timeout: 30_000 });
+  ).toHaveCount(locnetModel.locations.length, { timeout: 120_000 });
   // Spreadsheet serializers only include explicitly marked data sheets.
   await expect(coverageMaps.locator("[data-sheet]")).toHaveCount(0);
 

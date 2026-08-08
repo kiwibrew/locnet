@@ -1,5 +1,13 @@
 # Frequently Asked Questions
 
+## How does the model calculate and automatically add backhaul?
+
+The model dimensions backhaul for the busiest hour in the final year of the network's life. It starts with the Year 1 monthly traffic per user, applies the annual traffic-growth rate through the final year, assumes that 8.5% of monthly traffic occurs in the busy hour, and converts that traffic to a peak rate in Mbps per user. The **Backhaul Required** result is this final-year peak rate multiplied by the community-network users supported by the access network, plus the number of Public Access Facility (PAF) seats. PAF seats are used here instead of all people who may share them.
+
+For every backhaul link selected by the user, the model divides the link's rated speed by the final-year peak Mbps per user and rounds the result to estimate how many users that link can support. It then adds the capacities of all selected links. If their combined capacity is lower than the number of users supported by the solution, the model treats the backhaul as underprovisioned.
+
+To close the shortfall, the model finds the selected backhaul link with the lowest average variable bandwidth charge per user over the system life. This is the "cheapest" option for this calculation; it is not necessarily the link with the lowest equipment cost or fixed monthly charge. The model calculates how many additional copies of that link are needed, rounding up so that the shortfall is fully covered, and adds them automatically. The added links appear in the bill of materials and increase the reported available backhaul, backhaul CapEx, and fixed and variable backhaul OpEx. The model only duplicates a backhaul type that the user has already selected; it does not choose a new technology.
+
 ## How does the Power Model Work?
 
 The Power Model estimates the power-system costs for each location in a network design. It produces separate capital expenditure (CapEx) and lifetime mains-electricity operating expenditure (OpEx) estimates; together, these are the power component of the solution's total cost of ownership over the selected system life. The model does not automatically choose a power system: select the option that best describes each location, then compare the resulting costs and assumptions.
@@ -62,4 +70,3 @@ The application tries to place its pin in the centre of the country chosen. This
 ## What does the Site Structure option in a location do; it's not clear if anything changes if you choose "Use a Building" or "Tower/mast/utility pole".
 
 This is a legacy option that no longer impacts the model. It's in the directions for use of the application so it's being left in for now. Some day it will disappear.
-

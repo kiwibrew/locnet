@@ -326,8 +326,22 @@ async def modeler(
             # Capacity of all sectors of this type at a location
             downlink_mbps = sectors * sector_mbps
             # Calculate the peak hour capacity required
-            user_monthly_traffic = (year_1_traffic * (1 + traffic_growth_pct) ** (system_life + 1))
-            user_final_year_peak_mbps = user_monthly_traffic / 30 * 0.085
+            user_monthly_traffic = (
+                    year_1_traffic
+                    * (1 + traffic_growth_pct) ** (system_life - 1)
+            )
+            busy_hour_pct = 0.085
+            user_busy_hour_traffic = user_monthly_traffic / 30 * busy_hour_pct
+            user_busy_hour_megabits = (
+                    user_busy_hour_traffic
+                    * 1000  # megabytes_per_gigabyte
+                    * 8  # bits_per_byte
+            )
+            user_final_year_peak_mbps = (
+                    user_busy_hour_megabits
+                    / 60  # minutes_per_hour
+                    / 60  # seconds_per_minute
+            )
 
             # Determine the population covered, users and households supported
             if tech["technology"] == "PAF":

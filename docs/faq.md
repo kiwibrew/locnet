@@ -1,5 +1,19 @@
 # Frequently Asked Questions
 
+## What if my technology doesn't last as long as my system?
+
+Each technology has an expected lifespan, and the model accounts for technology that will need to be replaced before the end of the system's life. It divides the system life by the technology lifespan and rounds up to determine the number of times the technology must be purchased:
+
+`tech_refresh = ceil(system_life / tech_lifespan)`
+
+For example, technology with a five-year lifespan in a ten-year system has a refresh count of two. Technology with a six-year lifespan in the same system also has a refresh count of two, because it must be replaced once during that period.
+
+The model multiplies the original capital cost per sector by this refresh count:
+
+`capex_per_sector = capex_per_sector * tech_refresh`
+
+This adjusted sector cost is included in the access-network CapEx. The access-network CapEx then contributes to the model's construction spend, which is used to calculate depreciation over the life of the system.
+
 ## How does the model calculate and automatically add backhaul?
 
 The model dimensions backhaul for the busiest hour in the final year of the network's life. It starts with the Year 1 monthly traffic per user, applies the annual traffic-growth rate through the final year, assumes that 8.5% of monthly traffic occurs in the busy hour, and converts that traffic to a peak rate in Mbps per user. The **Backhaul Required** result is this final-year peak rate multiplied by the community-network users supported by the access network, plus the number of Public Access Facility (PAF) seats. PAF seats are used here instead of all people who may share them.

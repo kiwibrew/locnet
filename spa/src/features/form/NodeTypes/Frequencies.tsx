@@ -34,6 +34,7 @@ export const RenderFrequencies = ({ formPath }: FrequenciesProps) => {
         type: 'ToggleButton',
         value: technology.frequency.toString(),
         labelText: technology.frequency_name,
+        ...(Number(technology.frequency) === 193414 ? { hidden: true } : {}),
         ...(isIsm || isGpon
           ? {
               checked: true,

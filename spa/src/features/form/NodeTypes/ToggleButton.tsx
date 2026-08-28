@@ -12,6 +12,7 @@ export const ToggleButtonSchema = FormNodeSchema.extend({
   value: z.string(),
   checked: z.boolean().optional(),
   disabled: z.boolean().optional(),
+  hidden: z.boolean().optional(),
   modelPath: z.string().optional(),
   get children() {
     return NodesSchema;
@@ -41,6 +42,10 @@ export const RenderToggleButton = ({ node, formPath }: Props) => {
     },
     [setIsChecked],
   );
+
+  if (node.hidden) {
+    return null;
+  }
 
   return (
     <div>

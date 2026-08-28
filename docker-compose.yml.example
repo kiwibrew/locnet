@@ -17,4 +17,4 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - .:/usr/src/app
+      - ./cache:/usr/src/app/cache

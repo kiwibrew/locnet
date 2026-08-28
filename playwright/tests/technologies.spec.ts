@@ -47,4 +47,20 @@ test("requires a technology before adding a network location", async ({
 
   await addLocation.click();
   await expect(page.getByTestId("location-0")).toBeVisible();
+  await expect(
+    page.getByTestId("physical_characteristics"),
+  ).toHaveCount(0);
+
+  const useModelHouseholds = page.getByTestId(
+    "location-0-model-households",
+  );
+  const householdOverride = page.getByTestId("location-0-households");
+  await expect(useModelHouseholds).toBeChecked();
+  await expect(householdOverride).toBeDisabled();
+  await expect(householdOverride).toHaveValue("");
+  await expect(page.getByTestId("location-0-towerOpex")).toHaveValue("0");
+  await expect(page.getByTestId("location-0-towerHeight")).toHaveValue("6");
+
+  await useModelHouseholds.uncheck();
+  await expect(householdOverride).toBeEnabled();
 });

@@ -7,107 +7,6 @@ import { type LocNetModel } from './model';
 import { locnetBuilderInputToModel } from './submit';
 import { useStaticFormTsContext } from '../form/FormProvider';
 
-// Sample data value from API docs
-export const sampleData: BuilderInput = {
-  iso_3: 'PER',
-  area_sqkm: 100,
-  households_total: 100,
-  users_per_household: 3.19,
-  total_potential_users: 319,
-  pop_growth_rate: 1.1,
-  hh_income_week: 245.9,
-  paf_usd_hour: 0.6,
-  capex_subsidy: 10000,
-  businesses: 1,
-  business_users: 2,
-  service_providers: 1,
-  service_provider_users: 2,
-  paf_deterred_use: 13,
-  paf_sub_use: 4,
-  paf_non_sub_use: 9,
-  paf_facilities_charge: 0.25,
-  terrain_type: 'None',
-  vegetation_type: 'None',
-  provider_type: 'provider_community',
-  oc_margin: 15,
-  other_opex: 7.5,
-  corp_tax: 0,
-  wacc: 6,
-  finance_cost: 5,
-  staff_opex_fixed: 1.2,
-  staff_opex_variable: 0.3,
-  power_reliable_hours: 4,
-  power_intermittent_hours: 24,
-  power_offgrid_hours: 48,
-  power_hybrid_hours: 12,
-  labour_cost: 4.6,
-  maintenance_opex: 2,
-  opex_subsidy: 0,
-  ue_subsidy: 0,
-  ue_cost: 100,
-  debt_proportion: 50,
-  inflation: 2.01,
-  spectrum_licence_fee: 0,
-  community_capex_discount: 0,
-  system_life: 10,
-  year_1_traffic: 10,
-  traffic_growth: 25,
-  hh_size: 3.5,
-  existing_ue_above_med: 50,
-  existing_ue_below_med: 30,
-  mains_power_installation_cost: 2000,
-  mains_power_cost_kwh: 0.65,
-  solar_cost_watt: 0.6,
-  battery_cost_watt_hour: 0.3,
-  battery_dod: 80,
-  charger_inverter_base: 50,
-  charger_inverter_variable: 0.35,
-  solar_efficiency: 21,
-  solar_derating: 0.5,
-  battery_age_derating: 0.5,
-  locations: [
-    {
-      location_name: 'Location 1',
-      latitude: 0,
-      longitude: 0,
-      power_type: 'power_mains_rel',
-      tower_cost: 1000,
-      network_type: ['ISM FWA 5.8 GHz', 'ISM Wi-Fi 2.4 GHz'],
-      sectors: [1, 1],
-      network_links: ['ISM FWA 500'],
-      backhaul_links: [],
-      backhaul_cost_base: [],
-      backhaul_cost_mbps: [],
-    },
-    {
-      location_name: 'Location 2',
-      latitude: 0,
-      longitude: 0,
-      power_type: 'power_mains_rel',
-      tower_cost: 1000,
-      network_type: ['ISM FWA 5.8 GHz', 'ISM Wi-Fi 2.4 GHz'],
-      sectors: [1, 1],
-      network_links: ['ISM FWA 500', 'ISM FWA 500'],
-      backhaul_links: ['LEO Satellite'],
-      backhaul_cost_base: [100],
-      backhaul_cost_mbps: [5],
-    },
-    {
-      location_name: 'Location 3',
-      latitude: 0,
-      longitude: 0,
-      power_type: 'power_solar',
-      tower_cost: 1000,
-      network_type: ['ISM FWA 5.8 GHz', 'ISM Wi-Fi 2.4 GHz'],
-      sectors: [1, 1],
-      network_links: ['ISM FWA 500'],
-      backhaul_links: ['Fibre 1G', 'HTS VSAT'],
-      backhaul_cost_base: [200, 50],
-      backhaul_cost_mbps: [0.5, 20],
-    },
-  ],
-};
-
 export const useLoadBuilderInput = () => {
   const { useFormStore, setModelAndFormByModelRoot, waitForFormChange } =
     useStaticFormTsContext();
@@ -155,7 +54,7 @@ export const useLoadBuilderInput = () => {
       await sleepPromise(1000)
 
       const formPathForNetworkElements: LocNetFormPath =
-        'nodes.2.children.0.children.7.children.0';
+        'nodes.2.children.0.children.6.children.0';
       const networkElements = get(useFormStore.getState(), formPathForNetworkElements);
       if (!networkElements || networkElements.type !== 'NetworkElements') {
         console.error(
@@ -191,6 +90,7 @@ export const useLoadBuilderInput = () => {
             // in the switch/case to allow assertNever() below to work
             // and assert that we've handled all keys
             break;
+          case 'model_version':
           case 'area_sqkm':
           case 'battery_age_derating':
           case 'battery_cost_watt_hour':
@@ -208,11 +108,9 @@ export const useLoadBuilderInput = () => {
           case 'solar_derating':
           case 'solar_efficiency':
           case 'system_life':
-          case 'terrain_type':
           case 'total_potential_users':
           case 'traffic_growth':
           case 'users_per_household':
-          case 'vegetation_type':
           case 'year_1_traffic':
           case 'households_total':
           case 'hh_size':

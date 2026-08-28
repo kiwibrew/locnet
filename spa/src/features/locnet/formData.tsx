@@ -94,14 +94,6 @@ export const locNetForm = {
             },
             {
               type: 'Disclosure',
-              labelIntlId: 'physical_characteristics',
-              children: [
-                { type: 'Terrain', modelPath: 'terrain_type' },
-                { type: 'Vegetation', modelPath: 'vegetation_type' },
-              ],
-            },
-            {
-              type: 'Disclosure',
               labelIntlId: 'provider_type',
               children: [{ type: 'OrganisationType', modelPath: 'provider_type' }],
             },
@@ -219,6 +211,11 @@ export const locNetForm = {
           columnsFormPath: `api.modelerAPIOutput.${'pbom_table_columns' satisfies keyof ModelerAPIOutput}`,
           rowsFormPath: `api.modelerAPIOutput.${'pbom_table_rows' satisfies keyof ModelerAPIOutput}`,
           isSortable: false,
+        },
+        {
+          type: 'ExportCoverageMaps',
+          labelText: 'Location Coverage Maps',
+          coverageMapsFormPath: `api.modelerAPIOutput.${'coverage_maps' satisfies keyof ModelerAPIOutput}`,
         },
       ],
     },

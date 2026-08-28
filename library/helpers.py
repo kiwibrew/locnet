@@ -255,6 +255,24 @@ def get_towers():
         raise Exception(f"Failed to load {query_name} data: {str(e)}")
 
 
+def get_tower_details():
+    """Return defaults and validation metadata for per-location tower fields."""
+    query_name = "tower_details"
+    sql_query = """
+        SELECT variable, value, min, max, step, unit, seq,
+               variable as element, category, alt
+        FROM defaults
+        WHERE category == 'na'
+          AND (variable == 'tower_opex' OR variable == 'tower_height')
+        ORDER BY seq, variable
+    """
+
+    try:
+        return fetch_grist_data(sql_query)
+    except Exception as e:
+        raise Exception(f"Failed to load {query_name} data: {str(e)}")
+
+
 def get_tech_data():
     query_name = "tech_data"
     sql_query = "SELECT * from technology"

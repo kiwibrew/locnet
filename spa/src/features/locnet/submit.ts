@@ -13,6 +13,9 @@ import {
   newBlankBackhaulLink,
   newBlankLocation,
   newBlankNetworkType,
+  calculateLocationsAreaSqKm,
+  calculateOverrideHouseholds,
+  towerTypesDataFromDOM,
 } from '../form/NodeTypes/NetworkElements.utils';
 import type { NetworkElement } from '../form/NodeTypes/NetworkElements';
 import { generateRandomKey } from '../form/key';
@@ -22,6 +25,9 @@ declare global {
     locnetBuilderInputToModel: (input: BuilderInput) => LocNetModel;
   }
 }
+
+export const GEOSPATIAL_API_ERROR_MESSAGE =
+  "The model could not be processed because an API doesn't have data on the location";
 
 export const useLocNetServerSubmit = () => {
   const handleSubmit: SubmitHandler<EditableLocNetForm, EditableLocNetModel> =
@@ -50,7 +56,7 @@ export const useLocNetServerSubmit = () => {
   return handleSubmit;
 };
 
-const submitModel = async (
+export const submitModel = async (
   builderInput: BuilderInput,
 ): Promise<EditableLocNetForm['api']['modelerAPIOutput']> => {
   const api = new ApiClient();
@@ -60,10 +66,15 @@ const submitModel = async (
     return modelResult;
   } catch (e) {
     let message = String(e);
-    if (e && typeof e === 'object' && 'detail' in e) {
+    if (e instanceof Response) {
+      console.error('Non-JSON server response', e);
+      message =
+        e.status === 502
+          ? GEOSPATIAL_API_ERROR_MESSAGE
+          : `The server returned HTTP ${e.status}${e.statusText ? ` ${e.statusText}` : ''}.`;
+    } else if (e && typeof e === 'object' && 'detail' in e) {
       console.error('Server response', e);
       message = String(e.detail);
-      alert(`Server response: ${e.detail}`);
     } else {
       console.error(e);
     }
@@ -79,12 +90,16 @@ export const locnetModelToBuilderInput = (
   }
 
   const model = removeSoftDeletes(locNetModel);
+  const modelWithoutLegacyProfiles = { ...model };
+  delete (modelWithoutLegacyProfiles as Record<string, unknown>).terrain_type;
+  delete (modelWithoutLegacyProfiles as Record<string, unknown>).vegetation_type;
 
   return {
-    ...model,
-    total_potential_users: model.total_potential_users
-      ? parseInt(model.total_potential_users.toString(), 10)
-      : 0,
+    ...modelWithoutLegacyProfiles,
+    model_version: 2,
+    area_sqkm: calculateLocationsAreaSqKm(model.locations ?? []),
+    households_total: calculateOverrideHouseholds(model.locations ?? []),
+    total_potential_users: undefined,
     locations: model.locations?.map(networkElementToLocationData) ?? [],
   };
 };
@@ -140,8 +155,14 @@ const networkElementToLocationData = (
   location_name: networkElement.location_name,
   latitude: networkElement.latitude,
   longitude: networkElement.longitude,
+  radius: networkElement.radius,
+  households: networkElement.use_model_households
+    ? null
+    : parseInt(networkElement.households, 10),
   power_type: networkElement.power_type ?? null,
   tower_cost: parseFloat(networkElement.towerType.cost_USD),
+  tower_opex: parseFloat(networkElement.towerType.opex_USD),
+  tower_height: parseFloat(networkElement.towerType.height_m),
   network_type: networkElement.networkTypes.map(
     (networkType) => networkType.type,
   ),
@@ -173,6 +194,9 @@ const locationDataToNetworkElement = (
   location_name: locationData.location_name,
   latitude: locationData.latitude,
   longitude: locationData.longitude,
+  radius: locationData.radius ?? 2,
+  use_model_households: locationData.households == null,
+  households: locationData.households?.toString() ?? '',
   power_type: locationData.power_type,
   networkTypes: locationData.network_type.map(
     (network_type_item, index): NetworkElement['networkTypes'][number] => {
@@ -190,8 +214,10 @@ const locationDataToNetworkElement = (
     },
   ),
   towerType: {
-    name: '',
+    name: towerTypesDataFromDOM[0]?.variable ?? '',
     cost_USD: locationData.tower_cost?.toString() ?? '',
+    opex_USD: locationData.tower_opex?.toString() ?? '',
+    height_m: locationData.tower_height?.toString() ?? '',
   },
   midhaulLink: locationData.network_links.map(
     (network_link_item, index): NetworkElement['midhaulLink'][number] => {

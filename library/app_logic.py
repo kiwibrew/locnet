@@ -1,11 +1,12 @@
 import logging
 import math
+from copy import deepcopy
 import numpy_financial as npf
 import numpy as np
 import pandas as pd
 from fastapi import HTTPException
-from library.helpers import (get_tech_data, get_terrain, get_vegetation, get_backhaul, get_midhaul,
-                             get_centroid, demand_curve, build_keyed_row, get_country_ids)
+from library.helpers import (get_tech_data, get_backhaul, get_midhaul,
+                             demand_curve, build_keyed_row, get_country_ids)
 from library.bpo import (get_pl_lab_cos_by_year,
                          get_pl_oth_sys_op_cos_by_year,
                          get_pl_bh_pow_op_cos_by_year, get_pl_spec_fee_by_year,
@@ -21,7 +22,12 @@ from library.bpo import (get_pl_lab_cos_by_year,
 from library.supply import assign_users, apply_cpe_costs, power_model
 from library.display import get_net_summary_table, get_dc_points, get_dcba_table
 from library.classes import BuilderInput, ModelerOutput, PowerModelInput
-from math import pi, log10, ceil, sqrt
+from library.geospatial import (
+    CoverageService,
+    GeospatialClient,
+    calculate_coverage_population,
+)
+from math import pi, ceil
 
 
 NETWORK_BOM_ROW_COLUMNS = [
@@ -34,6 +40,32 @@ NETWORK_BOM_ROW_COLUMNS = [
     "cpe_cost",
     "network_capex",
 ]
+
+
+def calculate_access_users_supported(
+    *,
+    technology_family: str,
+    population_covered: float,
+    ue_per_sector: float,
+    sectors: int,
+    household_size: float,
+    sector_mbps: float,
+    user_final_year_peak_mbps: float,
+) -> float:
+    """Apply the population, equipment, and throughput capacity limits."""
+    if technology_family not in {"Mobile", "FWA", "GPON"}:
+        raise ValueError(
+            f"Unsupported access technology family: {technology_family}"
+        )
+    if user_final_year_peak_mbps <= 0:
+        raise ValueError("Final-year peak traffic per user must be greater than zero")
+
+    users_per_ue = 1 if technology_family == "Mobile" else household_size
+    return min(
+        population_covered,
+        ue_per_sector * sectors * users_per_ue,
+        (sector_mbps * sectors) / user_final_year_peak_mbps,
+    )
 
 
 def build_network_bom_dataframe(
@@ -120,34 +152,31 @@ def build_network_bom_dataframe(
     return bom_df[NETWORK_BOM_ROW_COLUMNS]
 
 
-def modeler(input_data: BuilderInput) -> ModelerOutput:
+async def modeler(
+    input_data: BuilderInput,
+    geospatial_client: CoverageService | None = None,
+) -> ModelerOutput:
+    if geospatial_client is None:
+        async with GeospatialClient.from_config() as configured_client:
+            return await modeler(input_data, configured_client)
+
     # Log the received data
     logging.info(f'Received input: {input_data.model_dump_json()}')
 
-    # Read tech, terrain, vegetation, and backhaul data from cache
+    # Read technology and link data from the model database
     iso_3, iso_2, iso_code, country_name = get_country_ids(input_data.iso_3)  # numeric ISO code
     tech_data = get_tech_data()
-    terrain_data = get_terrain()
-    vegetation_data = get_vegetation()
     backhaul_data = get_backhaul()
     midhaul_data = get_midhaul()
-
-    # Calculate population density
-    population_density = input_data.total_potential_users / input_data.area_sqkm
-
-    # Find the appropriate vegetation loss factor depending on the vegetation type input
-    vegetation_type = input_data.vegetation_type
-    vegetation_factor = next((item["value"] for item in vegetation_data if item["name"] == vegetation_type),
-                             None)
-    if vegetation_factor is None:
-        raise HTTPException(status_code=400, detail="Invalid vegetation type")
 
     # Set some empty variables that will be filled latter
     data_rows = []
     midhaul_rows = []
     backhaul_rows = []
     power_rows = []
+    coverage_maps = []
     tower_costs = []
+    location_population_estimates = []
     tech_use = []  # A list that will store all technology types in use
     paf_facilities = 0
     paf_seats = 0
@@ -155,8 +184,8 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
     user_final_year_peak_mbps = False  # The peak hour data rate per user in the final year of network operation
 
     # Get some model inputs that will remain constant through the calculations
-    hh_size = input_data.users_per_household  # hh_size here only includes occupants from 10-79
-    area_sqkm = input_data.area_sqkm
+    hh_size = input_data.hh_size or input_data.users_per_household
+    area_sqkm = sum(pi * location.radius ** 2 for location in input_data.locations)
     year_1_traffic = int(input_data.year_1_traffic)
     traffic_growth = round(float(input_data.traffic_growth),2)
     traffic_growth_pct = traffic_growth / 100  # Defaults and user entries are for percent so we divide by 100
@@ -178,23 +207,8 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
         businesses = 0
     logging.info(f"Business Users is {bus_users}")
 
-    # Get the total potential users and multiply by the population growth rate to the third year
-    total_potential_users_all_types = int(input_data.total_potential_users * ((1 + pop_growth_rate) ** 3))
-    # then reduce them by service provider and business users
-    # This means we don't double-count members of the community getting service from their employer
-    potential_household_users = total_potential_users_all_types - sp_users - bus_users
-    if potential_household_users <= 0:
-        raise HTTPException(
-            status_code=422,
-            detail="The submitted community cannot support the number of service providers and/or businesses entered."
-        )
-    logging.info(f"Potential Household Users is {potential_household_users}")
-
     labour_cost = input_data.labour_cost
     labour_monthly = labour_cost * 40 * 4.3
-    terrain_type = input_data.terrain_type
-    # Get tne number of households and  multiply by the population growth rate to the third year
-    households = int(input_data.households_total* ((1 + pop_growth_rate) ** 3)) if input_data.households_total is not None else 0  # Household Decision Makers
 
     # PAF parameters for use in supply model
     paf_hours_month_seat = 129  # Supply model considers 50% availability of 10 hours day, 6 days per week.
@@ -207,12 +221,8 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
 
     if paf_use_pp > 0:
         paf_users_per_seat = paf_hours_month_seat / paf_use_pp
-        paf_seat_demand_seats = paf_use_pp * potential_household_users / paf_hours_month_seat
     else:
         paf_users_per_seat = 0
-        paf_seat_demand_seats = 0
-
-    logging.info(f"demand for paf seats is {round(paf_seat_demand_seats)}")
     logging.info(f"use pp is {paf_use_pp} and users per seat is {round(paf_users_per_seat)}")
 
     # Get model power variable inputs for passing through to the power model:
@@ -235,9 +245,20 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
     # Process each location received
     for location in input_data.locations:
         logging.info(f'Processing location {location}')
-        tower_costs.append(location.tower_cost)
+        if location.tower_height is None or location.tower_opex is None:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    f"Tower height and tower operating expense are required at "
+                    f"{location.location_name}."
+                ),
+            )
+        tower_costs.append(location.tower_cost or 0)
         power_type = location.power_type
         location_watts = 0 # Start a counter for all power use per location
+        location_population_estimate = 0.0
+        location_coverage_features = []
+        location_area_sqkm = pi * location.radius ** 2
         logging.info(f"power type for this location is {power_type}")
         latitude = location.latitude
         longitude = location.longitude
@@ -249,20 +270,40 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
             access_capex = sector_power_use = users_sector = downlink_mbps = sector_mbps = cost_per_sector = sector_coverage = 0
             logging.info(f'Processing technology {nt}')
             tech = next((item for item in tech_data if item["network_type"] == nt), None)
-            terrain = next((item for item in terrain_data if item["name"] == terrain_type), None)
 
-            if not tech or not terrain:
-                raise HTTPException(status_code=400, detail=f"Error occurred with network or terrain data at {location}")
+            if not tech:
+                raise HTTPException(status_code=400, detail=f"Invalid network type at {location.location_name}")
             # Add the technology to our list of techs in use
             tech_use.append(tech["technology"])
-            # Calculate various values for each network type and sector
-            vegetation_loss = tech["veg_loss_meter"] * vegetation_factor
-            # Terrain can be processed on a per site basis if future changes to the UI and builder input support it
-            terrain_reduction = terrain["value"]
             spectrum_mhz = tech["spectrum_mhz"]
             ue_per_sector = tech["ue_per_sector"]
-            nominal_freq = tech["nominal_freq"]
-            max_path_loss = tech["max_path_loss"]
+
+            coverage = await calculate_coverage_population(
+                location=location,
+                technology=tech,
+                iso_3=iso_3,
+                household_size=hh_size,
+                service=geospatial_client,
+            )
+            cell_radius = coverage.cell_radius_km
+            sector_coverage = coverage.sector_coverage_sqkm
+            vegetation_factor = coverage.vegetation_factor
+            vegetation_loss = coverage.vegetation_loss
+            pop_covered = coverage.population_covered
+            location_population_estimate = max(
+                location_population_estimate,
+                pop_covered,
+            )
+            coverage_feature = deepcopy(coverage.geojson)
+            properties = coverage_feature.get("properties")
+            if not isinstance(properties, dict):
+                properties = {}
+            coverage_feature["properties"] = {
+                **properties,
+                "network_type": nt,
+                "technology": tech["technology"],
+            }
+            location_coverage_features.append(coverage_feature)
 
             # Calculate the number of end users supported per UE
             if tech["technology"] in ["Mobile", "PAF"]:
@@ -271,18 +312,7 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
             else:
                 users_per_ue = hh_size
 
-            # Coverage Calculations
-            if tech["technology"] == "GPON":  # Calculate the extent based on the area to be served
-                cell_radius = math.sqrt(area_sqkm / pi)
-                sector_coverage = pi * (cell_radius ** 2)
-            elif tech["technology"] == "PAF":  # No coverage is provided
-                cell_radius = 0
-                sector_coverage = area_sqkm
-            else:  # Calculate the physical extent of the radio coverage accounting for tower height
-                cell_radius = 10 ** ((max_path_loss - vegetation_loss - 32.44 - (20 * log10(nominal_freq))) / 20)
-                sector_coverage = pi * (cell_radius ** 2) * terrain_reduction
-
-            coverage_area = min((sector_coverage * sectors), area_sqkm)
+            coverage_area = min((sector_coverage * sectors), location_area_sqkm)
 
             # Find the power requirement of the technology
             watts_sector = tech["power_consumption"]
@@ -296,23 +326,42 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
             # Capacity of all sectors of this type at a location
             downlink_mbps = sectors * sector_mbps
             # Calculate the peak hour capacity required
-            user_monthly_traffic = (year_1_traffic * (1 + traffic_growth_pct) ** (system_life + 1))
-            user_final_year_peak_mbps = user_monthly_traffic / 30 * 0.085
+            user_monthly_traffic = (
+                    year_1_traffic
+                    * (1 + traffic_growth_pct) ** (system_life - 1)
+            )
+            busy_hour_pct = 0.085
+            user_busy_hour_traffic = user_monthly_traffic / 30 * busy_hour_pct
+            user_busy_hour_megabits = (
+                    user_busy_hour_traffic
+                    * 1000  # megabytes_per_gigabyte
+                    * 8  # bits_per_byte
+            )
+            user_final_year_peak_mbps = (
+                    user_busy_hour_megabits
+                    / 60  # minutes_per_hour
+                    / 60  # seconds_per_minute
+            )
 
             # Determine the population covered, users and households supported
             if tech["technology"] == "PAF":
                 loc_paf_seats = sectors
                 paf_seats += loc_paf_seats
-                pop_covered = potential_household_users
-                users_sector = paf_hours_month_seat / paf_use_pp
+                users_sector = paf_users_per_seat
                 users_supported = users_sector * sectors
                 # Re-set downlink mbps to reflect peak hour demand in final year times number of seats
                 downlink_mbps = round((user_final_year_peak_mbps * loc_paf_seats),2)
             else:
-                pop_covered_per_sector = min((population_density * sector_coverage), total_potential_users_all_types)
-                pop_covered = min(pop_covered_per_sector * sectors, total_potential_users_all_types)
-                users_sector = min(pop_covered_per_sector,(sector_mbps / user_final_year_peak_mbps), (ue_per_sector * hh_size))
-                users_supported = min(pop_covered,(users_sector * sectors))
+                users_supported = calculate_access_users_supported(
+                    technology_family=tech["technology"],
+                    population_covered=pop_covered,
+                    ue_per_sector=ue_per_sector,
+                    sectors=sectors,
+                    household_size=hh_size,
+                    sector_mbps=sector_mbps,
+                    user_final_year_peak_mbps=user_final_year_peak_mbps,
+                )
+                users_sector = users_supported / sectors if sectors else 0
             households_sector = users_sector / hh_size
             households_supported = users_supported / hh_size
 
@@ -329,7 +378,7 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
             elif tech["technology"] == "GPON":
                 logging.info("MIR for GPON")
                 active_fraction = 0.05
-                active_users = users_sector * active_fraction
+                active_users = max(users_sector * active_fraction, 1)
                 user_mir = max((sector_mbps / active_users), 1000)
                 logging.info(f"MIR for GPON calculated as {user_mir}")
             else:
@@ -345,9 +394,11 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
                 cpe_cost = tech["cpe_cost"]
             if tech["technology"] == "GPON":  # In the case of GPON the major inputs are cost of labour and area
                 gpon_base = tech["cost_per_sector"]
-                capex_per_sector = gpon_base + (households_supported * ((labour_cost * 8) + 50) * sqrt(area_sqkm / pi))
-                terrain_cost_multiplier = 1 + (1 - terrain_reduction)
-                capex_per_sector = capex_per_sector * terrain_cost_multiplier
+                capex_per_sector = gpon_base + (
+                    households_supported
+                    * ((labour_cost * 8) + 50)
+                    * location.radius
+                )
                 logging.info(f'capex per sector: {capex_per_sector}')
             else:  # In the case of Mobile and FWA we take the cost per sector from the technologies table
                 capex_per_sector = tech["cost_per_sector"]
@@ -370,24 +421,27 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
             # Determine the cost per pass
             if cpe_cost > 0:  # presence of a CPE assumes we're covering a household so add on CPE costs
                 cost_per_sector += (cpe_cost * households_sector)
-            cost_per_pass = cost_per_sector / users_sector
+            cost_per_pass = cost_per_sector / users_sector if users_sector else 0
             logging.info(f"cost per pass calculated at {cost_per_pass}")
 
             # Determine quality of service measurements
             if tech["technology"] == "PAF":
                 user_cir = user_mir
             else:
-                user_cir = sector_mbps / (users_supported / sectors)
+                user_cir = (
+                    sector_mbps / (users_supported / sectors)
+                    if users_supported and sectors
+                    else 0
+                )
             # Correct CIR in low capacity situations
             if user_cir > user_mir:
                 user_cir = user_mir
-            user_contention = user_mir / user_cir
+            user_contention = user_mir / user_cir if user_cir else 0
 
             # For Public Access Facilities, reset irrelevant data and assign cost per seat
             if tech["technology"] == "PAF":
                 spectrum_mhz = 0
                 vegetation_loss = 0
-                terrain_reduction = 1
                 efficiency_bits_hz = 0
                 paf_seat_cost = tech["cost_per_sector"]
 
@@ -398,13 +452,12 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
                 "sectors": sectors,  # Number of sectors of the technology at this location
                 "network_capex": access_capex,
                 "vegetation_loss": vegetation_loss,
-                "terrain_reduction": terrain_reduction,
+                "vegetation_factor": vegetation_factor,
                 "spectrum_mhz": spectrum_mhz,  # the amount of spectrum per sector
                 "ue_per_sector": ue_per_sector,  # maximum users supported by the technology
                 "users_per_ue": users_per_ue,  # changed to household size from static FWA figure
                 "cell_radius": round(cell_radius, 2),
                 "coverage_area": round(coverage_area, 2),
-                "population_density": round(population_density, 1),
                 "population_covered": round(pop_covered),
                 "efficiency_bits_hz": efficiency_bits_hz,
                 "downlink_mbps": downlink_mbps,
@@ -422,6 +475,25 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
                 "user_monthly_traffic": round(user_monthly_traffic)
 
             })
+
+        coverage_maps.append(
+            {
+                "location_name": location.location_name,
+                "latitude": location.latitude,
+                "longitude": location.longitude,
+                "geojson": {
+                    "type": "FeatureCollection",
+                    "features": location_coverage_features,
+                },
+            }
+        )
+
+        location_population_estimates.append(
+            {
+                "population": location_population_estimate,
+                "households": location.households,
+            }
+        )
 
         # For each location process midhaul links (network_links)
         for link in location.network_links:
@@ -526,6 +598,8 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
         power_results = power_model(input_data=power_model_input)
         power_row = power_results.power_row.model_dump()
         power_row["structure_cost"] = location.tower_cost
+        power_row["structure_annual_opex"] = location.tower_opex
+        power_row["structure_height_m"] = location.tower_height
         power_rows.append(power_row)
 
         location_power_capex = power_results.power_capex
@@ -533,6 +607,43 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
         location_power_opex = power_results.power_opex
         power_opex += location_power_opex
         # endregion
+
+    modeled_population = sum(
+        estimate["population"] for estimate in location_population_estimates
+    )
+    submitted_population = input_data.total_potential_users or 0
+    base_population = submitted_population or modeled_population
+    total_potential_users_all_types = int(
+        round(base_population * ((1 + pop_growth_rate) ** 3))
+    )
+
+    base_households = sum(
+        estimate["households"]
+        if estimate["households"] is not None
+        else estimate["population"] / hh_size
+        for estimate in location_population_estimates
+    )
+    households = int(round(base_households * ((1 + pop_growth_rate) ** 3)))
+
+    # Avoid double-counting community members who receive service through a
+    # business or service-provider connection.
+    potential_household_users = total_potential_users_all_types - sp_users - bus_users
+    if potential_household_users <= 0:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "The modeled community cannot support the number of service "
+                "providers and/or businesses entered."
+            ),
+        )
+    logging.info(f"Potential Household Users is {potential_household_users}")
+
+    paf_seat_demand_seats = (
+        paf_use_pp * potential_household_users / paf_hours_month_seat
+        if paf_use_pp > 0
+        else 0
+    )
+    logging.info(f"demand for paf seats is {round(paf_seat_demand_seats)}")
 
     # Summarise Power CapEx and OpEx across all locations
     power_capex = round(power_capex, 2)
@@ -568,6 +679,8 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
     pbom_table_columns = [
         {"title": "Location", "data": "location_name"},
         {"title": "Structure Cost", "data": "structure_cost"},
+        {"title": "Structure Annual OpEx", "data": "structure_annual_opex"},
+        {"title": "Structure Height (m)", "data": "structure_height_m"},
         {"title": "Power Use (W)", "data": "power_required"},
         {"title": "Mains Installation", "data": "mains_power_installation_cost"},
         {"title": "Charger Cost", "data": "charger_cost"},
@@ -583,6 +696,8 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
                 [
                     "location_name",
                     "structure_cost",
+                    "structure_annual_opex",
+                    "structure_height_m",
                     "power_required",
                     "mains_power_installation_cost",
                     "charger_cost",
@@ -2414,7 +2529,6 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
         "solar_derating": solar_derating,
         "solar_efficiency": solar_efficiency,
         "system_life": system_life,
-        "terrain_type": terrain_type,
         "total_potential_users": total_potential_users_all_types,
         "system_capex": int(round(system_capex)),
         "total_system_cost": int(round(system_cost)),
@@ -2422,7 +2536,6 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
         "traffic_growth": traffic_growth,
         "users_per_household": hh_size,
         "users_supported": solution_supported_users,
-        "vegetation_type": vegetation_type,
         "year_1_traffic": year_1_traffic,
         "demand_curve_points": dc_points,
         "dcba_table_rows": dcba_table_rows,
@@ -2438,6 +2551,7 @@ def modeler(input_data: BuilderInput) -> ModelerOutput:
         "bom_table_rows": bom_table_rows,
         "pbom_table_columns": pbom_table_columns,
         "pbom_table_rows": pbom_table_rows,
+        "coverage_maps": coverage_maps,
         "net_summary_table_columns": net_summary_table_columns,
         "net_summary_table_rows": net_summary_table_rows
     }

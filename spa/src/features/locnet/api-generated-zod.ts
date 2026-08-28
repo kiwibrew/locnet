@@ -26,7 +26,11 @@ export const locationDataSchema = z.object({
     location_name: z.string(),
     latitude: z.number(),
     longitude: z.number(),
-    tower_cost: z.number().nullable(),
+    radius: z.number().optional(),
+    households: z.number().optional().nullable(),
+    tower_cost: z.number().optional().nullable(),
+    tower_opex: z.number().optional().nullable(),
+    tower_height: z.number().optional().nullable(),
     network_type: z.array(z.string()),
     sectors: z.array(z.number()),
     network_links: z.array(z.string()),
@@ -97,6 +101,13 @@ export const midhaulDetailSchema = z.object({
     element: z.string()
 });
 
+export const locationCoverageMapSchema = z.object({
+    location_name: z.string(),
+    latitude: z.number(),
+    longitude: z.number(),
+    geojson: z.record(z.string(), z.any())
+});
+
 export const modelQuerySchema = z.object({
     iso_3: z.string(),
     lang: z.string()
@@ -118,7 +129,8 @@ export const modelerApiOutputSchema = z.object({
     pbom_table_rows: z.array(z.record(z.string(), z.any())).optional().nullable(),
     pbom_table_columns: z.array(z.record(z.string(), z.any())).optional().nullable(),
     bom_table_rows: z.array(z.record(z.string(), z.any())).optional().nullable(),
-    bom_table_columns: z.array(z.record(z.string(), z.any())).optional().nullable()
+    bom_table_columns: z.array(z.record(z.string(), z.any())).optional().nullable(),
+    coverage_maps: z.array(locationCoverageMapSchema).optional()
 });
 
 export const powerItemSchema = z.object({
@@ -136,7 +148,8 @@ export const technologyDetailSchema = z.object({
 });
 
 export const builderInputSchema = z.object({
-    area_sqkm: z.number(),
+    model_version: z.number().optional(),
+    area_sqkm: z.number().optional().nullable(),
     battery_age_derating: z.number(),
     battery_cost_watt_hour: z.number(),
     battery_dod: z.number(),
@@ -155,11 +168,9 @@ export const builderInputSchema = z.object({
     solar_derating: z.number(),
     solar_efficiency: z.number(),
     system_life: z.number(),
-    terrain_type: z.string().optional().nullable(),
-    total_potential_users: z.number(),
+    total_potential_users: z.number().optional().nullable(),
     traffic_growth: z.number(),
     users_per_household: z.number(),
-    vegetation_type: z.string().optional().nullable(),
     year_1_traffic: z.number(),
     households_total: z.number().optional().nullable(),
     hh_size: z.number().optional().nullable(),

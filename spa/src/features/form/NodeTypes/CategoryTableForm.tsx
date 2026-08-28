@@ -58,6 +58,8 @@ export const RenderCategoryTableForm = ({
 
         // https://trello.com/c/eiyqWXZ1/168-household-calculatorjs
         const isReadOnly = [
+          'area_sqkm',
+          'households_total',
           'users_per_household',
           'total_potential_users',
           'paf_usd_hour',

@@ -1,5 +1,8 @@
 import { useStaticFormTs } from '../form/useStaticFormTs';
-import { StaticFormTsProvider } from '../form/FormProvider';
+import {
+  StaticFormTsProvider,
+  useStaticFormTsContext,
+} from '../form/FormProvider';
 import { RenderNodes } from '../form/RenderNodes';
 import { locNetFormResolver } from './formLogic';
 import { locnetStaticFormValue, type EditableLocNetForm } from './formData';
@@ -31,6 +34,7 @@ export const Form = () => {
       <Header />
       <main>
         <div className={styles.page}>
+          <ModelSubmissionError />
           <form onSubmit={submitHandler} onInvalid={handleInvalid}>
             <RenderNodes nodes={locnetStaticFormValue.nodes} id="nodes" />
           </form>
@@ -40,4 +44,30 @@ export const Form = () => {
       </main>
     </StaticFormTsProvider>
   );
+};
+
+export const ModelSubmissionErrorMessage = ({
+  output,
+}: {
+  output: EditableLocNetForm['api']['modelerAPIOutput'];
+}) => {
+  if (!output || !('type' in output) || output.type !== 'error') {
+    return null;
+  }
+
+  return (
+    <div className={styles.modelSubmissionError} role="alert">
+      {output.message}
+    </div>
+  );
+};
+
+const ModelSubmissionError = () => {
+  const { useWatchFormStore } = useStaticFormTsContext();
+  const output = useWatchFormStore(
+    'api.modelerAPIOutput',
+    undefined as EditableLocNetForm['api']['modelerAPIOutput'],
+  );
+
+  return <ModelSubmissionErrorMessage output={output} />;
 };

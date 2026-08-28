@@ -1,11 +1,14 @@
 from turtle import done
 from pathlib import Path
+from xml.etree.ElementTree import Element, SubElement
 
 from fastapi import FastAPI, Request, Form, HTTPException, Query
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse
 from markdown import markdown
+from markdown.extensions import Extension
+from markdown.treeprocessors import Treeprocessor
 from pydantic import BaseModel
 from routers import lookups
 from routers.builder import router as builder_router
@@ -14,12 +17,61 @@ import logging
 
 
 DOCUMENTS_DIRECTORY = Path(__file__).resolve().parent / "docs"
+EXAMPLES_DIRECTORY = DOCUMENTS_DIRECTORY / "examples"
+
+
+def list_example_filenames(directory: Path) -> list[str]:
+    """Return JSON example filenames in display order."""
+    return sorted(
+        (path.name for path in directory.glob("*.json") if path.is_file()),
+        key=str.casefold,
+    )
 
 
 def render_markdown_document(filename: str) -> str:
     """Read a local Markdown document and convert it to HTML for a template."""
     markdown_source = (DOCUMENTS_DIRECTORY / filename).read_text(encoding="utf-8")
     return markdown(markdown_source, extensions=["extra", "toc"])
+
+
+class FaqAccordionTreeprocessor(Treeprocessor):
+    """Group level-two headings and their content into FAQ disclosures."""
+
+    def run(self, root: Element) -> None:
+        children = list(root)
+        for child in children:
+            root.remove(child)
+
+        answer = None
+        for child in children:
+            if child.tag == "h2":
+                details = SubElement(
+                    root, "details", {"class": "faq-item", "name": "faq"}
+                )
+                summary = SubElement(details, "summary")
+                summary.append(child)
+                answer = SubElement(details, "div", {"class": "faq-answer"})
+            elif answer is None:
+                root.append(child)
+            else:
+                answer.append(child)
+
+
+class FaqAccordionExtension(Extension):
+    def extendMarkdown(self, md) -> None:
+        md.treeprocessors.register(
+            FaqAccordionTreeprocessor(md), "faq_accordion", 1
+        )
+
+
+def render_faq_document(filename: str) -> str:
+    """Render a Markdown FAQ with level-two headings as accordion items."""
+    markdown_source = (DOCUMENTS_DIRECTORY / filename).read_text(encoding="utf-8")
+    return markdown(
+        markdown_source,
+        extensions=["extra", "toc", FaqAccordionExtension()],
+    )
+
 
 app = FastAPI(title='Community Network Modeler',
               description='An application to model simple community networks',
@@ -45,12 +97,11 @@ async def get_spa(request: Request, lang: str = 'en', ajax: bool = Query(False))
         text_data = get_text()
         selected_text = {item['element']: item[lang] for item in text_data}
         frequencies = get_frequencies()
-        terrain = get_terrain()
-        vegetation = get_vegetation()
         technologies = get_technologies()
         midhaul_data = get_midhaul()
         backhaul_data = get_backhaul()
         tower_data = get_towers()
+        tower_details = get_tower_details()
         all_net_types = get_network_types()
         tech_data = get_tech_data()
         paf_facilities_charge = get_paf_facilities_charge()
@@ -60,20 +111,22 @@ async def get_spa(request: Request, lang: str = 'en', ajax: bool = Query(False))
             # Return only the text data as JSON for AJAX requests
             return JSONResponse({"text": selected_text, "selected_language": lang})
 
+        example_filenames = list_example_filenames(EXAMPLES_DIRECTORY)
+
         return spaTemplates.TemplateResponse("index.html",
                                           {"request": request,
                                            "countries": country_data,
                                            "text": text_data,
                                            "selected_language": lang,
+                                           "example_filenames": example_filenames,
                                            "frequencies": frequencies,
-                                           "terrain": terrain,
-                                           "vegetation": vegetation,
                                            "technologies": technologies,
                                            "network_types": all_net_types,
                                            "power_types": power_types,
                                            "midhaul_data": midhaul_data,
                                            "backhaul_data": backhaul_data,
                                            "tower_data": tower_data,
+                                           "tower_details": tower_details,
                                            "tech_data": tech_data,
                                            "paf_facilities_charge": paf_facilities_charge,
                                           } )
@@ -141,7 +194,7 @@ async def faq_page(request: Request, lang: str = 'en', embedded: bool = Query(Fa
         text_data = get_text()
         selected_text = {item['element']: item[lang] for item in text_data}
 
-        faq_content = render_markdown_document("faq.md")
+        faq_content = render_faq_document("faq.md")
 
         return templates.TemplateResponse("faq.html",
                                           {"request": request,

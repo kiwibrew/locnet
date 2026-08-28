@@ -219,7 +219,8 @@ export type Body_post_handler__post = {
 };
 
 export type BuilderInput = {
-  area_sqkm: number;
+  model_version?: number;
+  area_sqkm?: number | null;
   battery_age_derating: number;
   battery_cost_watt_hour: number;
   battery_dod: number;
@@ -238,11 +239,9 @@ export type BuilderInput = {
   solar_derating: number;
   solar_efficiency: number;
   system_life: number;
-  terrain_type?: string | null;
-  total_potential_users: number;
+  total_potential_users?: number | null;
   traffic_growth: number;
   users_per_household: number;
-  vegetation_type?: string | null;
   year_1_traffic: number;
   households_total?: number | null;
   hh_size?: number | null;
@@ -325,7 +324,11 @@ export type LocationData = {
   location_name: string;
   latitude: number;
   longitude: number;
-  tower_cost: number | null;
+  radius?: number;
+  households?: number | null;
+  tower_cost?: number | null;
+  tower_opex?: number | null;
+  tower_height?: number | null;
   network_type: string[];
   sectors: number[];
   network_links: string[];
@@ -353,6 +356,13 @@ export type MidhaulDetail = {
   element: string;
 };
 
+export type LocationCoverageMap = {
+  location_name: string;
+  latitude: number;
+  longitude: number;
+  geojson: object;
+};
+
 export type ModelQuery = {
   iso_3: string;
   lang: string;
@@ -375,6 +385,7 @@ export type ModelerAPIOutput = {
   pbom_table_columns?: object[] | null;
   bom_table_rows?: object[] | null;
   bom_table_columns?: object[] | null;
+  coverage_maps?: LocationCoverageMap[];
 };
 
 export type PowerItem = {

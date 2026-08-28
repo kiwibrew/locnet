@@ -1,0 +1,60 @@
+.container {
+  break-after: page;
+}
+
+.labelText {
+  font-weight: normal;
+  font-style: italic;
+  border-bottom: solid 1px #999;
+  padding: 1rem 0.5rem 0.2rem;
+}
+
+.mapGrid {
+  display: grid;
+  gap: 1.5rem;
+  margin: 1rem 0;
+}
+
+.mapCard {
+  break-inside: avoid;
+}
+
+.mapHeading {
+  margin: 0 0 0.5rem;
+}
+
+.interactiveMap,
+.pdfMap {
+  width: 100%;
+  height: 350px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.pdfMap,
+.pdfFallback {
+  display: none;
+}
+
+:global(.print-mode) .mapGrid {
+  display: block;
+}
+
+:global(.print-mode) .mapCard {
+  margin-bottom: 1rem;
+}
+
+:global(.print-mode) .interactiveMap {
+  display: none;
+}
+
+:global(.print-mode) .pdfMap {
+  display: block;
+  max-width: 700px;
+  object-fit: contain;
+}
+
+:global(.print-mode) .pdfFallback {
+  display: block;
+}

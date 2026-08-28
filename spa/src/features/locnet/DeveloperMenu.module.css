@@ -35,25 +35,34 @@
   background-color: var(--interactive-box-toggle-selected-background-hover);
 }
 
-.loadSampleDataButton {
+.exampleSelect {
   background-color: var(--interactive-box-background);
-  margin: 1rem;
   padding: 0.6rem 1rem;
 }
 
-.loadSampleDataButton:hover,
-.loadSampleDataButton:focus {
+.exampleSelect:hover,
+.exampleSelect:focus {
   background-color: var(--interactive-box-toggle-selected-background-hover);
 }
 
 .debugBody {
-  display: flex;
-  flex-direction: row;
   height: 0;
   overflow: hidden;
+  padding: 0 1rem;
 }
 
-.details[open] .debugBody {  
+.details[open] .debugBody {
   height: auto;
   overflow: visible;
+  padding-bottom: 1rem;
+}
+
+.debugBody hr {
+  border: 0;
+  border-top: solid 1px #bbb;
+  margin: 1rem 0;
+}
+
+.debugBody pre {
+  overflow-x: auto;
 }

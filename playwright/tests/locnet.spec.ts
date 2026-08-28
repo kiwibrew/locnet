@@ -1,8 +1,8 @@
 import { test, expect } from "@playwright/test";
+import { readFileSync } from "node:fs";
 // Only import types from the SPA, never runtime code.
 import { type BuilderInput } from "../../spa/src/features/locnet/api-generated-client";
 import { type LocNetModel } from "../../spa/src/features/locnet/model";
-import { sampleData } from "./sampleData";
 import { assertNever } from "./typescript";
 
 declare global {
@@ -18,9 +18,35 @@ test("has title", async ({ page }) => {
   await expect(page).toHaveTitle(/Community Network Builder/);
 });
 
-const builderInput: BuilderInput = sampleData;
+const builderInput = JSON.parse(
+  readFileSync(
+    new URL("../../docs/examples/indonesia_example.json", import.meta.url),
+    "utf8",
+  ),
+) as BuilderInput;
 
-test("can load sample data and generate output", async ({ page }) => {
+test("lists and loads example data", async ({ page }) => {
+  await page.goto("");
+
+  const developerOptions = page.getByTestId("developer_options");
+  await developerOptions.locator("summary").click();
+  const examples = page.getByTestId("load_example");
+
+  await expect(examples.locator("option")).toHaveText([
+    "Load Example Data",
+    "Indonesia Example",
+    "Peru Example",
+    "Philippines Example",
+  ]);
+
+  await examples.selectOption("indonesia_example.json");
+  await expect(page.getByTestId("sel_country")).toHaveValue("IDN", {
+    timeout: 30_000,
+  });
+});
+
+test("can use example data and generate output", async ({ page }) => {
+  test.setTimeout(180_000);
   await page.goto("");
 
   const locnetModel = await page.evaluate(async (builderInput) => {
@@ -48,7 +74,6 @@ test("can load sample data and generate output", async ({ page }) => {
   // Open all disclosures
   await page.getByTestId("sel_freq").click();
   await page.getByTestId("tech_paf").click();
-  await page.getByTestId("physical_characteristics").click();
   await page.getByTestId("provider_type").click();
   await page.getByTestId("expert_opt").click();
   await page.getByTestId("net_elements").click();
@@ -67,20 +92,14 @@ test("can load sample data and generate output", async ({ page }) => {
         // in the switch/case to allow assertNever() below to work
         // and assert that we've handled ALL keys
         break;
-      case "terrain_type":
-        await page.getByLabel("Terrain profile").selectOption(String(newValue));
-        break;
-      case "vegetation_type":
-        await page
-          .getByLabel("Vegetation profile")
-          .selectOption(String(newValue));
-        break;
+      case "model_version":
+      case "area_sqkm":
+      case "households_total":
       case "users_per_household":
       case "total_potential_users":
       case "paf_usd_hour":
         // uneditable field
         break;
-      case "area_sqkm":
       case "battery_age_derating":
       case "battery_cost_watt_hour":
       case "battery_dod":
@@ -99,7 +118,6 @@ test("can load sample data and generate output", async ({ page }) => {
       case "system_life":
       case "traffic_growth":
       case "year_1_traffic":
-      case "households_total":
       case "hh_size":
       case "pop_growth_rate":
       case "hh_income_week":
@@ -176,6 +194,10 @@ test("can load sample data and generate output", async ({ page }) => {
         .fill(networkElement.location_name);
     }
 
+    // Keep this browser test independent from the external population service.
+    await page.getByTestId(`location-${i}-model-households`).uncheck();
+    await page.getByTestId(`location-${i}-households`).fill("100");
+
     for (let y = 0; y < networkElement.networkTypes.length; y++) {
       const networkType = networkElement.networkTypes[y];
       await page.getByTestId(`location-${i}-add-network-type`).click();
@@ -200,6 +222,12 @@ test("can load sample data and generate output", async ({ page }) => {
       await page
         .getByTestId(`location-${i}-towerTypeCost_USD`)
         .fill(networkElement.towerType.cost_USD);
+      await page
+        .getByTestId(`location-${i}-towerOpex`)
+        .fill(networkElement.towerType.opex_USD);
+      await page
+        .getByTestId(`location-${i}-towerHeight`)
+        .fill(networkElement.towerType.height_m);
     }
 
     for (let y = 0; y < networkElement.midhaulLink.length; y++) {
@@ -236,9 +264,33 @@ test("can load sample data and generate output", async ({ page }) => {
 
   await page.getByTestId("calculate_network").click();
 
-  await page.waitForTimeout(2000);
+  await expect(page.getByTestId("report")).toHaveText("Report", {
+    timeout: 120_000,
+  });
+  await expect(page.getByTestId("model_output")).toBeAttached({
+    timeout: 120_000,
+  });
 
-  await expect(page.getByTestId("report")).toHaveText("Report");
+  const developerOptions = page.getByTestId("developer_options");
+  await developerOptions.locator("summary").click();
+  const jsonBlocks = developerOptions.locator("pre");
+  await expect(jsonBlocks).toHaveCount(2);
+  await expect(jsonBlocks.nth(0)).toHaveAttribute("data-testid", "model_input");
+  await expect(jsonBlocks.nth(1)).toHaveAttribute(
+    "data-testid",
+    "model_output",
+  );
+
+  const coverageMaps = page.getByTestId("coverage-maps");
+  await expect(coverageMaps).toBeVisible();
+  await expect(coverageMaps.getByTestId(/^coverage-map-/)).toHaveCount(
+    locnetModel.locations.length,
+  );
+  await expect(
+    coverageMaps.locator('[data-pdf-map-status="ready"]'),
+  ).toHaveCount(locnetModel.locations.length, { timeout: 120_000 });
+  // Spreadsheet serializers only include explicitly marked data sheets.
+  await expect(coverageMaps.locator("[data-sheet]")).toHaveCount(0);
 
   const expectedDownloads = [
     ["Download CSV", /\.csv$/],
@@ -252,5 +304,20 @@ test("can load sample data and generate output", async ({ page }) => {
       page.getByRole("button", { name: buttonName }).click(),
     ]);
     expect(download.suggestedFilename()).toMatch(extension);
+
+    if (buttonName === "Download CSV" || buttonName === "Download PDF") {
+      const stream = await download.createReadStream();
+      const chunks: Buffer[] = [];
+      for await (const chunk of stream) chunks.push(Buffer.from(chunk));
+      const contents = Buffer.concat(chunks);
+      if (buttonName === "Download CSV") {
+        expect(contents.toString("utf8")).not.toContain(
+          "Location Coverage Maps",
+        );
+      } else {
+        // MapLibre canvases are replaced with PNG snapshots for PDF export.
+        expect(contents.toString("latin1")).toContain("/Subtype /Image");
+      }
+    }
   }
 });

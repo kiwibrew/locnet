@@ -6,3 +6,9 @@ docker-compose.yml
 .DS_Store
 .idea
 cache
+/.aiassistant/rules/architecture.md
+/.aiassistant/rules/general.md
+/.aiassistant/
+/.ai/
+/playwright/chrome/
+/playwright/chromium/

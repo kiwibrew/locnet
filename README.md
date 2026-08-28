@@ -3,8 +3,8 @@
 ## Overview
 - The Community Network Builder helps you estimate and understand the cost of building and operating a community network anywhere in the world.
 - Users can select the frequencies available in their context or proceed with the default ISM bands of 2.4GHz and 5.8GHz, which are widely available globally.
-- You can model mobile or Wi‑Fi networks, fixed wireless, fibre‑to‑the‑home, public access facilities, or any combination of these. The application guides users in describing terrain and vegetation conditions that may impact network deployment, particularly for radio frequency networks.
-- After specifying the population and area to be covered, users can design the network step by step, adding locations and technologies incrementally. The application provides helpful hints throughout this process, including suggested costs for network elements and traffic, which can easily be adjusted. For advanced control, the Expert Options menu allows users to fine‑tune details such as labour costs and electricity prices for their specific market.
+- You can model mobile or Wi‑Fi networks, fixed wireless, fibre‑to‑the‑home, public access facilities, or any combination of these. Radio coverage accounts for terrain visibility and land cover around each configured location.
+- Users design the network by adding locations, radii, and technologies. Area is derived from location radii, while population can be modelled from coverage geometry or overridden with a household count for an individual location.
 
 ## Background and credits
 - The Association for Progressive Communications (APC) commissioned Systems Knowledge Concepts (SKC) and Telco2 to develop a quantitative economic and financial model to enable the evaluation of the financial sustainability of different community‑based communications solutions in under‑serviced communities.
@@ -31,6 +31,7 @@
 
 ## Data and integrations
 - Menu and lookup data are provided by a remote database accessible via API (see Environment and configuration). The application depends on this API connection to populate its menus.
+- Coverage and population modelling uses the GLO-30 viewshed, ESA WorldCover, and WorldPop services.
 - Documentation/QSG content is now in git and is rendered into `/documentation` and `/qsg` respectively.
 
 ## Architecture at a glance
@@ -50,7 +51,8 @@ Prerequisites
 
 ## Environment and configuration
 - The application depends on an API connection to a database holding all of its menus — please contact the maintainer to set up an API key for read access to that data.
-- Copy `locnet.env` (or `.env` template) and provide values for required variables. At minimum you will need read access credentials for the menu/lookup API. If using Confluence‑backed docs/QSG, provide the relevant credentials and page IDs.
+- Copy `locnet.env` (or `.env` template) and provide values for required variables. At minimum you will need read access credentials for the menu/lookup API. Coverage calculations also require `GLO30_API_URL`, `GLO30_API_TOKEN`, `ESAWC_API_URL`, `ESAWC_API_TOKEN`, `WPOP_API_URL`, and `WPOP_API_TOKEN`.
+- Generated viewsheds are cached in `cache/geojson` by default; set `GEOJSON_CACHE_DIRECTORY` to a persistent volume path to override it. Entries expire after 30 days. When the cache exceeds 1 GB, least-recently-used entries are removed first.
 
 Install and run (local)
 1) Create and activate a virtual environment

@@ -5,6 +5,7 @@ import numpy_financial as npf
 import numpy as np
 import pandas as pd
 from fastapi import HTTPException
+from app.repositories import DataRepository
 from library.helpers import (get_tech_data, get_backhaul, get_midhaul,
                              demand_curve, build_keyed_row, get_country_ids)
 from library.bpo import (get_pl_lab_cos_by_year,
@@ -154,20 +155,21 @@ def build_network_bom_dataframe(
 
 async def modeler(
     input_data: BuilderInput,
+    repository: DataRepository,
     geospatial_client: CoverageService | None = None,
 ) -> ModelerOutput:
     if geospatial_client is None:
         async with GeospatialClient.from_config() as configured_client:
-            return await modeler(input_data, configured_client)
+            return await modeler(input_data, repository, configured_client)
 
     # Log the received data
     logging.info(f'Received input: {input_data.model_dump_json()}')
 
     # Read technology and link data from the model database
-    iso_3, iso_2, iso_code, country_name = get_country_ids(input_data.iso_3)  # numeric ISO code
-    tech_data = get_tech_data()
-    backhaul_data = get_backhaul()
-    midhaul_data = get_midhaul()
+    iso_3, iso_2, iso_code, country_name = await get_country_ids(repository, input_data.iso_3)  # numeric ISO code
+    tech_data = await get_tech_data(repository)
+    backhaul_data = await get_backhaul(repository)
+    midhaul_data = await get_midhaul(repository)
 
     # Set some empty variables that will be filled latter
     data_rows = []
@@ -595,7 +597,7 @@ async def modeler(
             power_reliable_hours=power_reliable_hours,
             system_type=location.power_type
         )
-        power_results = power_model(input_data=power_model_input)
+        power_results = await power_model(repository, input_data=power_model_input)
         power_row = power_results.power_row.model_dump()
         power_row["structure_cost"] = location.tower_cost
         power_row["structure_annual_opex"] = location.tower_opex

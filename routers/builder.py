@@ -2,6 +2,8 @@ from fastapi import APIRouter, Request, HTTPException, Body
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 import logging
+from app.dependencies import DataRepositoryDependency
+from app.repositories import DataRepository
 from library.helpers import get_text
 from library.app_logic import modeler
 from library.classes import BuilderInput, ModelerOutput, ModelerAPIOutput
@@ -18,12 +20,15 @@ templates = Jinja2Templates(directory="templates")
 
 
 # Function to handle modeler logic
-async def modeler_logic(input_data: BuilderInput) -> ModelerOutput:
+async def modeler_logic(
+    input_data: BuilderInput,
+    repository: DataRepository,
+) -> ModelerOutput:
     logging.info("entering function modeler_logic")
     logging.info(f'Received input: {input_data.model_dump_json()}')
     try:
         # Call the builder function from helpers
-        return await modeler(input_data)
+        return await modeler(input_data, repository)
     except HTTPException:
         raise
     except GeospatialConfigurationError as e:
@@ -62,7 +67,7 @@ async def validate_model_input(input_data: BuilderInput) -> BuilderInput:
              tags=["API POST Endpoints"],
              include_in_schema=True
              )
-async def modeler_api(input_data: BuilderInput = Body(
+async def modeler_api(repository: DataRepositoryDependency, input_data: BuilderInput = Body(
     ...,
     example={
         "model_version": 2,
@@ -174,6 +179,6 @@ async def modeler_api(input_data: BuilderInput = Body(
             }
         ]
     }
-)):
+ )):
     # Use the modeler_logic function to get the result
-    return await modeler_logic(input_data)
+    return await modeler_logic(input_data, repository)

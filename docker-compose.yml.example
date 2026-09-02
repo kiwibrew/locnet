@@ -7,6 +7,8 @@ services:
     container_name: web-locnet
     env_file:
       - .env
+    environment:
+      DATABASE_URL: sqlite+aiosqlite:////app/data/app.db
     develop:
       watch:
         - action: sync
@@ -18,3 +20,4 @@ services:
       - "8000:8000"
     volumes:
       - ./cache:/usr/src/app/cache
+      - ./app/data:/app/data

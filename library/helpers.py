@@ -1,8 +1,7 @@
 import logging
 import math
-import requests
 from collections import defaultdict
-from config import GRIST_SERVER, GRIST_DOC_ID, GRIST_API_KEY
+from app.repositories import DataRepository
 from library.classes import *
 from typing import List
 
@@ -11,34 +10,14 @@ def demand_curve(y, dc_parameter_a, dc_parameter_b):
     return min(math.exp((y - dc_parameter_a) / -dc_parameter_b), 0.95)
 
 
-def fetch_grist_data(sql_query):
-    """Fetches data from the Grist SQL API and returns a list of dictionaries."""
-    url = f"{GRIST_SERVER}/api/docs/{GRIST_DOC_ID}/sql"
-    headers = {"Authorization": f"Bearer {GRIST_API_KEY}"}
-    params = {"q": sql_query}
-
-    try:
-        response = requests.get(url, headers=headers, params=params,
-                                verify=True)  # `verify=False` for self-signed certs
-        response.raise_for_status()
-        data = response.json()
-
-        # Extract only the 'fields' values from each record
-        return [record["fields"] for record in data.get("records", [])]
-
-    except requests.exceptions.RequestException as e:
-        print(f"Error fetching data: {e}")
-        return []
-
-
-def get_countries():
+async def get_countries(repository: DataRepository):
     # Country data from ISO 3166-1
     query_name = "countries"
     sql_query = "SELECT name, iso_3 FROM countries"
 
     # Fetch Data
     try:
-        data = fetch_grist_data(sql_query)
+        data = await repository.fetch_all(sql_query)
         # Reformat the data
         iso_dict = {item["name"]: item["iso_3"] for item in data}
         return iso_dict
@@ -46,7 +25,7 @@ def get_countries():
         raise Exception(f"Failed to load {query_name} data: {str(e)}")
 
 
-def get_languages():
+async def get_languages(repository: DataRepository):
     # Adding languages to the app requires both an additional column in the text table, and setting
     # the comment to active in the iso_639_3 for the cooresponding language code.
     query_name = "languages"
@@ -54,18 +33,18 @@ def get_languages():
 
     # Fetch Data
     try:
-        data = fetch_grist_data(sql_query)
+        data = await repository.fetch_all(sql_query)
         return {item["lang"]: item["lang_name"] for item in data}
     except Exception as e:
         raise Exception(f"Failed to load {query_name} data: {str(e)}")
 
 
-def get_country_ids(iso_3):
+async def get_country_ids(repository: DataRepository, iso_3):
     # Country data from ISO 3166-1
     query_name = "country_ids"
     sql_query = f"SELECT iso_3, iso_2, iso_code, name FROM countries WHERE iso_3 = '{iso_3}'"
     try:
-        data = fetch_grist_data(sql_query)
+        data = await repository.fetch_all(sql_query)
         if data and isinstance(data, list):
             first_result = data[0]  # Extract first matching row
             iso_3 = first_result["iso_3"]
@@ -79,7 +58,7 @@ def get_country_ids(iso_3):
         raise Exception(f"Failed to load {query_name} data: {str(e)}")
 
 
-def get_centroid(iso_2):
+async def get_centroid(repository: DataRepository, iso_2):
     # Country centroid data pre-populated from python described
     # https://docs.google.com/document/d/1s-CT71YEr-IjxI5kVPR_17aRddWWf0M540q9fxrxK5U/edit?usp=sharing
     query_name = "centroid"
@@ -87,7 +66,7 @@ def get_centroid(iso_2):
     # Fetch Data
     # Fetch Data
     try:
-        data = fetch_grist_data(sql_query)
+        data = await repository.fetch_all(sql_query)
 
         # Ensure we have results
         if data and isinstance(data, list):
@@ -102,7 +81,7 @@ def get_centroid(iso_2):
         raise Exception(f"Failed to load {query_name} data: {str(e)}")
 
 
-def get_bounds(iso_3):
+async def get_bounds(repository: DataRepository, iso_3):
     # Country centroid and bounding-box data from the country_bounds table.
     # Used by the location picker to centre the map and constrain the marker
     # and latitude/longitude inputs to the selected country.
@@ -113,7 +92,7 @@ def get_bounds(iso_3):
         "FROM country_bounds WHERE iso_3 = '{0}'".format(iso_3.upper())
     )
     try:
-        data = fetch_grist_data(sql_query)
+        data = await repository.fetch_all(sql_query)
         if data and isinstance(data, list):
             first_result = data[0]  # Extract first matching row
             return {
@@ -131,7 +110,7 @@ def get_bounds(iso_3):
         raise Exception(f"Failed to load {query_name} data: {str(e)}")
 
 
-def get_frequencies():
+async def get_frequencies(repository: DataRepository):
     # Finds all frequencies in use in the manually populated technologies table
     query_name = "frequencies"
     sql_query = """
@@ -143,47 +122,47 @@ def get_frequencies():
 
     # Fetch Data
     try:
-        data = fetch_grist_data(sql_query)
+        data = await repository.fetch_all(sql_query)
         return data
     except Exception as e:
         raise Exception(f"Failed to load {query_name} data: {str(e)}")
 
 
-def get_terrain():
+async def get_terrain(repository: DataRepository):
     query_name = "terrain"
     sql_query = "SELECT name, element, value FROM terrain"
 
     # Fetch Data
     try:
-        data = fetch_grist_data(sql_query)
+        data = await repository.fetch_all(sql_query)
         return data
     except Exception as e:
         raise Exception(f"Failed to load {query_name} data: {str(e)}")
 
-def get_power():
+async def get_power(repository: DataRepository):
     query_name = "power"
     sql_query = "SELECT element, description FROM power"
 
     # Fetch Data
     try:
-        data = fetch_grist_data(sql_query)
+        data = await repository.fetch_all(sql_query)
         return data
     except Exception as e:
         raise Exception(f"Failed to load {query_name} data: {str(e)}")
 
-def get_vegetation():
+async def get_vegetation(repository: DataRepository):
     query_name = "vegetation"
     sql_query = "SELECT name, element, value FROM vegetation"
 
     # Fetch Data
     try:
-        data = fetch_grist_data(sql_query)
+        data = await repository.fetch_all(sql_query)
         return data
     except Exception as e:
         raise Exception(f"Failed to load {query_name} data: {str(e)}")
 
 
-def get_backhaul():
+async def get_backhaul(repository: DataRepository):
     query_name = "backhaul"
     sql_query = """
     SELECT name, type, speed_mbps, power_watts, 
@@ -193,43 +172,43 @@ def get_backhaul():
 
     # Fetch Data
     try:
-        data = fetch_grist_data(sql_query)
+        data = await repository.fetch_all(sql_query)
         return data
     except Exception as e:
         raise Exception(f"Failed to load {query_name} data: {str(e)}")
 
 
-def get_midhaul():
+async def get_midhaul(repository: DataRepository):
     query_name = "midhaul"
     sql_query = "SELECT name, speed_mbps, power_watts, capital_cost_usd, element FROM midhaul"
 
     # Fetch Data
     try:
-        data = fetch_grist_data(sql_query)
+        data = await repository.fetch_all(sql_query)
         return data
     except Exception as e:
         raise Exception(f"Failed to load {query_name} data: {str(e)}")
 
 
-def get_defaults():
+async def get_defaults(repository: DataRepository):
     query_name = "defaults"
     sql_query = """SELECT variable, value, min, max, step, unit, seq, variable as element, category, alt
                  FROM defaults where category != 'na' order by seq"""
 
     # Fetch Data
     try:
-        data = fetch_grist_data(sql_query)
+        data = await repository.fetch_all(sql_query)
         return data
     except Exception as e:
         raise Exception(f"Failed to load {query_name} data: {str(e)}")
 
 
-def get_paf_facilities_charge():
+async def get_paf_facilities_charge(repository: DataRepository):
     query_name = "paf_facilities_charge"
     sql_query = """SELECT value from defaults where variable == 'paf_facilities_charge'"""
     # Fetch Data
     try:
-        data = fetch_grist_data(sql_query)
+        data = await repository.fetch_all(sql_query)
         logging.info(data)
         # Extract just the value from the data structure
         if data and len(data) > 0 and "value" in data[0]:
@@ -243,19 +222,19 @@ def get_paf_facilities_charge():
         raise Exception(f"Failed to load {query_name} data: {str(e)}")
 
 
-def get_towers():
+async def get_towers(repository: DataRepository):
     query_name = "towers"
     sql_query = "SELECT variable, element, value, min, max, step FROM tower"
 
     # Fetch Data
     try:
-        data = fetch_grist_data(sql_query)
+        data = await repository.fetch_all(sql_query)
         return data
     except Exception as e:
         raise Exception(f"Failed to load {query_name} data: {str(e)}")
 
 
-def get_tower_details():
+async def get_tower_details(repository: DataRepository):
     """Return defaults and validation metadata for per-location tower fields."""
     query_name = "tower_details"
     sql_query = """
@@ -268,36 +247,36 @@ def get_tower_details():
     """
 
     try:
-        return fetch_grist_data(sql_query)
+        return await repository.fetch_all(sql_query)
     except Exception as e:
         raise Exception(f"Failed to load {query_name} data: {str(e)}")
 
 
-def get_tech_data():
+async def get_tech_data(repository: DataRepository):
     query_name = "tech_data"
     sql_query = "SELECT * from technology"
 
     # Fetch Data
     try:
-        data = fetch_grist_data(sql_query)
+        data = await repository.fetch_all(sql_query)
         return data
     except Exception as e:
         raise Exception(f"Failed to load {query_name} data: {str(e)}")
 
 
-def get_text():
+async def get_text(repository: DataRepository):
     query_name = "text"
     sql_query = "SELECT element, en, es FROM text"
 
     # Fetch Data
     try:
-        data = fetch_grist_data(sql_query)
+        data = await repository.fetch_all(sql_query)
         return data
     except Exception as e:
         raise Exception(f"Failed to load {query_name} data: {str(e)}")
 
 
-def get_site_text_by_language(lang: str):
+async def get_site_text_by_language(repository: DataRepository, lang: str):
     """
     Return a dictionary mapping element -> text for the requested two-letter language code.
     Falls back to English ("en") if the requested language text is missing for an element.
@@ -308,7 +287,7 @@ def get_site_text_by_language(lang: str):
     if len(lang) != 2 or not lang.isalpha():
         raise ValueError("Language code must be a two-letter ISO code")
 
-    rows = get_text()  # [{"element": "banner", "en": "...", "es": "..."}, ...]
+    rows = await get_text(repository)  # [{"element": "banner", "en": "...", "es": "..."}, ...]
     result = {}
     for row in rows:
         element = row.get("element")
@@ -323,7 +302,7 @@ def get_site_text_by_language(lang: str):
     return result
 
 
-def get_non_users(iso_3):
+async def get_non_users(repository: DataRepository, iso_3):
     # Checks population distribution data to determine the percent of the population younger than ten years
     # or older than eighty years so we can exclude them from the population of potential network users.
     query_name = "get_non_users"
@@ -337,7 +316,7 @@ def get_non_users(iso_3):
 
     # Fetch Data
     try:
-        data = fetch_grist_data(sql_query)
+        data = await repository.fetch_all(sql_query)
         # Ensure data is not empty and extract the first non_users field
         if data and data[0].get("non_users") is not None:
             return round(data[0]["non_users"], 1), False  # Return only the non_users percentage
@@ -350,7 +329,7 @@ def get_non_users(iso_3):
         raise Exception(f"Failed to load {query_name} data: {str(e)}")
 
 
-def get_hh_size(iso_code):
+async def get_hh_size(repository: DataRepository, iso_code):
     query_name = "get_hh_size"
     iso_code = int(iso_code)
     sql_query = f"""
@@ -360,7 +339,7 @@ def get_hh_size(iso_code):
 
     # Fetch Data
     try:
-        data = fetch_grist_data(sql_query)
+        data = await repository.fetch_all(sql_query)
         # Ensure data is not empty and extract the first non_users field
         logging.info(data)
         if data and data[0].get("avg_size") is not None:
@@ -374,14 +353,14 @@ def get_hh_size(iso_code):
         raise Exception(f"Failed to load {query_name} data: {str(e)}")
 
 
-def get_gdp_cap(iso_3):
+async def get_gdp_cap(repository: DataRepository, iso_3):
     query_name = "get_gdp_cap"
     sql_query = f"""
     SELECT country, COALESCE(cy2023, cy2022, cy2021, cy2020) AS gdp_per_cap FROM wb_gdp_cap WHERE iso_3 = '{iso_3}'
     """
     # Fetch Data
     try:
-        data = fetch_grist_data(sql_query)
+        data = await repository.fetch_all(sql_query)
         # Ensure data is not empty and extract the first non_users field
         logging.info(data)
         if data and data[0].get("gdp_per_cap") is not None:
@@ -396,14 +375,14 @@ def get_gdp_cap(iso_3):
         raise Exception(f"Failed to load {query_name} data: {str(e)}")
 
 
-def get_inflation(iso_3):
+async def get_inflation(repository: DataRepository, iso_3):
     query_name = "get_inflation"
     sql_query = f"""
     SELECT country, COALESCE(cy2024, cy2023, cy2022, cy2021, cy2020, cy2019) AS inflation FROM imf_inf_2024 WHERE iso_3 = '{iso_3}'
     """
     # Fetch Data
     try:
-        data = fetch_grist_data(sql_query)
+        data = await repository.fetch_all(sql_query)
         # Ensure data is not empty and extract the first non_users field
         logging.info(data)
         if data and data[0].get("inflation") is not None:
@@ -417,14 +396,14 @@ def get_inflation(iso_3):
     except Exception as e:
         raise Exception(f"Failed to load {query_name} data: {str(e)}")
 
-def get_labour_share(iso_code):
+async def get_labour_share(repository: DataRepository, iso_code):
     query_name = "get_labour_share"
     sql_query = f"""
     SELECT cy2024 as labour_share_pct from undesa_labour_share_gdp where GeoAreaCode = '{iso_code}'
     """
     # Fetch Data
     try:
-        data = fetch_grist_data(sql_query)
+        data = await repository.fetch_all(sql_query)
         # Ensure data is not empty and extract the first non_users field
         logging.info(data)
         if data and data[0].get("labour_share_pct") is not None:
@@ -439,12 +418,12 @@ def get_labour_share(iso_code):
         raise Exception(f"Failed to load {query_name} data: {str(e)}")
 
 
-def get_corp_tax(iso_3):
+async def get_corp_tax(repository: DataRepository, iso_3):
     query_name = "get_corp_tax"
     sql_query = f"SELECT corp_tax_rate FROM damodaran_risk WHERE iso_3 = '{iso_3}'"
     # Fetch Data
     try:
-        data = fetch_grist_data(sql_query)
+        data = await repository.fetch_all(sql_query)
         # Ensure data is not empty and extract the corp_tax_rate field
         logging.info(data)
         if data and data[0].get("corp_tax_rate") is not None:
@@ -461,14 +440,14 @@ def get_corp_tax(iso_3):
 
 
 
-def get_pop_growth_rate(iso_3):
+async def get_pop_growth_rate(repository: DataRepository, iso_3):
     query_name = "get_pop_growth_rate"
     sql_query = f"""
     SELECT country, COALESCE(cy2023, cy2022, cy2021, cy2020) AS pop_growth_rate FROM wb_pop_growth WHERE iso_3 = '{iso_3}'
     """
     # Fetch Data
     try:
-        data = fetch_grist_data(sql_query)
+        data = await repository.fetch_all(sql_query)
         # Ensure data is not empty and extract the first non_users field
         logging.info(data)
         if data and data[0].get("pop_growth_rate") is not None:
@@ -483,7 +462,7 @@ def get_pop_growth_rate(iso_3):
         raise Exception(f"Failed to load {query_name} data: {str(e)}")
 
 
-def get_power_price(iso_3):
+async def get_power_price(repository: DataRepository, iso_3):
     query_name = "get_power_price"
     sql_query = f"""
     SELECT country, COALESCE(cy2019, cy2018, cy2017, cy2016, cy2015, cy2014) AS power_price FROM wb_power_price WHERE iso_3 = '{iso_3}'
@@ -492,7 +471,7 @@ def get_power_price(iso_3):
     no_default = True
     # Fetch Data
     try:
-        data = fetch_grist_data(sql_query)
+        data = await repository.fetch_all(sql_query)
         # Ensure data is not empty and extract the first non_users field
         if data and data[0].get("power_price") is not None:
             theData = round((data[0]["power_price"])/100, 1)  # Return only the power price in dollars
@@ -506,7 +485,7 @@ def get_power_price(iso_3):
     return theData, no_default
 
 
-def get_power_install(iso_3):
+async def get_power_install(repository: DataRepository, iso_3):
     # Return a likely power installation cost based on WB.DB.45 and GDP per Capita
     query_name = "get_power_install"
     sql_query = f"""
@@ -516,7 +495,7 @@ def get_power_install(iso_3):
     no_default = True
     # Fetch Data
     try:
-        data = fetch_grist_data(sql_query)
+        data = await repository.fetch_all(sql_query)
         # Ensure data is not empty and extract the first non_users field
         logging.info(data)
         if data and data[0].get("power_install") is not None:
@@ -530,48 +509,48 @@ def get_power_install(iso_3):
 
     multiplier = theData/300  # Assume it's a third of the cost of a warehouse installation
     logging.info(f"multiplier is {multiplier}")
-    gdp_cap, gdp_no_default = get_gdp_cap(iso_3)
+    gdp_cap, gdp_no_default = await get_gdp_cap(repository, iso_3)
     logging.info(f"gdp_cap is {gdp_cap}")
     install_cost = gdp_cap * multiplier
     logging.info(f"install_cost is {install_cost}")
     return int(install_cost), (no_default or gdp_no_default)
 
 
-def get_technologies():
+async def get_technologies(repository: DataRepository):
     query_name = "get_technology_names"
     sql_query = "SELECT distinct(technology), element as technology_name FROM technology WHERE technology != 'None'"
     # Fetch Data
     try:
-        data = fetch_grist_data(sql_query)
+        data = await repository.fetch_all(sql_query)
         return data
     except Exception as e:
         raise Exception(f"Failed to load {query_name} data: {str(e)}")
 
 
-def get_network_types():
+async def get_network_types(repository: DataRepository):
     query_name = "get_network_types"
     sql_query = "SELECT distinct(network_type), frequency, technology FROM technology where frequency > 0 order by network_type"
     # Fetch Data
     try:
-        data = fetch_grist_data(sql_query)
+        data = await repository.fetch_all(sql_query)
         return data
     except Exception as e:
         raise Exception(f"Failed to load {query_name} data: {str(e)}")
 
 
-def get_networks():
+async def get_networks(repository: DataRepository):
     query_name = "networks"
     sql_query = "SELECT DISTINCT(network_type) from technology where frequency > 0 order by network_type"
     # Fetch Data
     try:
-        data = fetch_grist_data(sql_query)
+        data = await repository.fetch_all(sql_query)
         # Extract just the network_type values from the response
         return [record["network_type"] for record in data if "network_type" in record]
     except Exception as e:
         raise Exception(f"Failed to load {query_name} data: {str(e)}")
 
 
-def filter_technologies(data: FrequencyData) -> List[FrequencyResponse]:
+async def filter_technologies(repository: DataRepository, data: FrequencyData) -> List[FrequencyResponse]:
     query_name = "filter_technologies"
     sql_query = """
         select frequency, network_type from technology where frequency in ({}) and technology in ({})
@@ -581,7 +560,7 @@ def filter_technologies(data: FrequencyData) -> List[FrequencyResponse]:
     )
     try:
         grouped_data = defaultdict(list)
-        records = fetch_grist_data(sql_query)
+        records = await repository.fetch_all(sql_query)
         for record in records:
             grouped_data[record["frequency"]].append(record["network_type"])
         return [FrequencyResponse(frequency=freq, network_types=types) for freq, types in grouped_data.items()]
@@ -589,7 +568,7 @@ def filter_technologies(data: FrequencyData) -> List[FrequencyResponse]:
         raise Exception(f"Failed to load {query_name} data: {str(e)}")
 
 
-def get_solarstats():
+async def get_solarstats(repository: DataRepository):
     query_name = "solarstats"
     sql_query = """
     SELECT
@@ -599,7 +578,7 @@ def get_solarstats():
 
     # Fetch Data
     try:
-        data = fetch_grist_data(sql_query)
+        data = await repository.fetch_all(sql_query)
         return data
     except Exception as e:
         raise Exception(f"Failed to load {query_name} data: {str(e)}")
@@ -621,33 +600,33 @@ def build_keyed_row(label: str, base_key: str, data_dict: dict) -> dict:
     }
 
 
-def calculate_characteristics(iso_3: str):
+async def calculate_characteristics(repository: DataRepository, iso_3: str):
     """
     Calculates and returns country-specific characteristics.
     """
     iso_3 = iso_3.upper()
-    country_ids = get_country_ids(iso_3)
+    country_ids = await get_country_ids(repository, iso_3)
     if not country_ids or country_ids[0] is None:
         return None
 
     iso_3, iso_2, iso_code, country_name = country_ids
 
     # Fetch the defaults data
-    defaults_data = get_defaults()
+    defaults_data = await get_defaults(repository)
 
     # Calculate the new updated values with country specific data
-    hh_size, hh_size_no_default = get_hh_size(iso_code)
-    non_users_pct, non_users_pct_no_default = get_non_users(iso_3)
+    hh_size, hh_size_no_default = await get_hh_size(repository, iso_code)
+    non_users_pct, non_users_pct_no_default = await get_non_users(repository, iso_3)
     non_users_pct = round(non_users_pct, 2)
     non_users = round((non_users_pct / 100 * hh_size), 1)
     non_users_no_default = hh_size_no_default or non_users_pct_no_default
     users_per_household = round(hh_size - non_users, 1)
     users_per_household_no_default = hh_size_no_default or non_users_no_default
-    gdp_cap, gdp_cap_no_default = get_gdp_cap(iso_3)
-    pop_growth_rate, pop_growth_rate_no_default = get_pop_growth_rate(iso_3)
-    power_price, power_price_no_default = get_power_price(iso_3)
-    power_install, power_install_no_default = get_power_install(iso_3)
-    labour_share, labour_share_no_default = get_labour_share(iso_code)
+    gdp_cap, gdp_cap_no_default = await get_gdp_cap(repository, iso_3)
+    pop_growth_rate, pop_growth_rate_no_default = await get_pop_growth_rate(repository, iso_3)
+    power_price, power_price_no_default = await get_power_price(repository, iso_3)
+    power_install, power_install_no_default = await get_power_install(repository, iso_3)
+    labour_share, labour_share_no_default = await get_labour_share(repository, iso_code)
     labour_share_pct = labour_share/100
     hh_income_week = round((gdp_cap * labour_share_pct * hh_size) / 52, 1)
     hh_income_week_no_default = (
@@ -655,13 +634,13 @@ def calculate_characteristics(iso_3: str):
             and hh_size_no_default
             and labour_share_no_default
     )
-    paf_facilities_charge = get_paf_facilities_charge()
+    paf_facilities_charge = await get_paf_facilities_charge(repository)
     labour_cost = round(((hh_income_week / 80) * 1.5), 1)
     labour_cost_no_default = hh_income_week_no_default
     paf_usd_hour = round(hh_income_week * (paf_facilities_charge / 100), 1)
     paf_usd_hour_no_default = hh_income_week_no_default
-    inflation, inflation_no_default = get_inflation(iso_3)
-    corp_tax_raw, corp_tax_no_default = get_corp_tax(iso_3)
+    inflation, inflation_no_default = await get_inflation(repository, iso_3)
+    corp_tax_raw, corp_tax_no_default = await get_corp_tax(repository, iso_3)
     corp_tax = corp_tax_raw * 100
     logging.info("Default characteristics calculations complete")
 

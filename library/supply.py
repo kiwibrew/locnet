@@ -1,12 +1,13 @@
+import asyncio
 import logging
 import math
 from typing import Any
 
 import requests
 from fastapi import HTTPException
+from sqlalchemy.exc import SQLAlchemyError
 
-from config import GRIST_API_KEY, GRIST_DOC_ID, GRIST_SERVER
-from library.helpers import fetch_grist_data
+from app.repositories import DataRepository
 from library.classes import PowerModelInput, PowerModelResult, PowerModelRow
 import numpy as np
 import pandas as pd
@@ -108,14 +109,22 @@ def _parse_solar_cache_record(record: Any) -> dict[str, float] | None:
     return solar_stats
 
 
-def _get_cached_solar_stats(latitude: float, longitude: float) -> dict[str, float] | None:
+async def _get_cached_solar_stats(
+    repository: DataRepository,
+    latitude: float,
+    longitude: float,
+) -> dict[str, float] | None:
     columns = ", ".join(("latitude", "longitude", *SOLAR_CACHE_DATA_COLUMNS))
     sql_query = (
         f"SELECT {columns} FROM {SOLAR_CACHE_TABLE} "
-        f"WHERE latitude = {latitude:.2f} AND longitude = {longitude:.2f}"
+        "WHERE latitude = :latitude AND longitude = :longitude"
     )
 
-    for record in fetch_grist_data(sql_query) or []:
+    records = await repository.fetch_all(
+        sql_query,
+        {"latitude": latitude, "longitude": longitude},
+    )
+    for record in records:
         solar_stats = _parse_solar_cache_record(record)
         if solar_stats is not None:
             return solar_stats
@@ -188,44 +197,40 @@ def _get_nasa_solar_stats(latitude: float, longitude: float) -> dict[str, float]
     return _parse_nasa_solar_stats(payload)
 
 
-def _store_solar_cache(latitude: float, longitude: float, solar_stats: dict[str, float]) -> None:
+async def _store_solar_cache(
+    repository: DataRepository,
+    latitude: float,
+    longitude: float,
+    solar_stats: dict[str, float],
+) -> None:
     """Persist a successful NASA response for future requests at these coordinates."""
-    url = f"{GRIST_SERVER}/api/docs/{GRIST_DOC_ID}/tables/{SOLAR_CACHE_TABLE}/records"
-    fields = {"latitude": latitude, "longitude": longitude, **solar_stats}
-    headers = {
-        "Authorization": f"Bearer {GRIST_API_KEY}",
-        "Content-Type": "application/json",
-    }
-
     try:
-        response = requests.post(
-            url,
-            headers=headers,
-            json={"records": [{"fields": fields}]},
-            timeout=30,
-        )
-        response.raise_for_status()
-    except requests.RequestException:
+        await repository.store_solar_cache(latitude, longitude, solar_stats)
+    except SQLAlchemyError:
         # NASA provided valid data, so a cache write failure should not prevent a
         # user from receiving a power-model result. It will be retried next time.
         logging.exception("Failed to store solar statistics in Solar_cache")
 
 
-def get_solar_statistics(latitude: float, longitude: float) -> dict[str, float]:
+async def get_solar_statistics(
+    repository: DataRepository,
+    latitude: float,
+    longitude: float,
+) -> dict[str, float]:
     """Return cached solar statistics, retrieving and caching them on a miss."""
     latitude = round(float(latitude), 2)
     longitude = round(float(longitude), 2)
     if not math.isfinite(latitude) or not math.isfinite(longitude):
         raise ValueError("Latitude and longitude must be finite numbers.")
 
-    solar_stats = _get_cached_solar_stats(latitude, longitude)
+    solar_stats = await _get_cached_solar_stats(repository, latitude, longitude)
     if solar_stats is not None:
         logging.info("Using cached solar statistics for %s, %s", latitude, longitude)
         return solar_stats
 
     logging.info("No complete solar-cache record for %s, %s; requesting NASA POWER", latitude, longitude)
-    solar_stats = _get_nasa_solar_stats(latitude, longitude)
-    _store_solar_cache(latitude, longitude, solar_stats)
+    solar_stats = await asyncio.to_thread(_get_nasa_solar_stats, latitude, longitude)
+    await _store_solar_cache(repository, latitude, longitude, solar_stats)
     return solar_stats
 
 
@@ -303,7 +308,10 @@ def apply_cpe_costs(df):
     return df
 
 
-def power_model(input_data: PowerModelInput) -> PowerModelResult:
+async def power_model(
+    repository: DataRepository,
+    input_data: PowerModelInput,
+) -> PowerModelResult:
     logging.info("Entered the power model")
 
     # Get variables from the input data
@@ -329,7 +337,7 @@ def power_model(input_data: PowerModelInput) -> PowerModelResult:
     power_capex = 0
     power_opex = 0
 
-    solar_stats = get_solar_statistics(latitude, longitude)
+    solar_stats = await get_solar_statistics(repository, latitude, longitude)
     min_sun = solar_stats["min_sun"]
     max_no_sun_days = solar_stats["max_no_sun_days"]
     annual_no_sun_days = solar_stats["annual_no_sun_days"]

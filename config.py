@@ -1,13 +1,16 @@
 import os
-from dotenv import load_dotenv
 
-# Load environment variables from a .env file (if present)
-load_dotenv()
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Grist API Configuration
-GRIST_SERVER = os.getenv("GRIST_SERVER")  # Default for local dev
-GRIST_DOC_ID = os.getenv("GRIST_DOC_ID")
-GRIST_API_KEY = os.getenv("GRIST_API_KEY")
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    database_url: str
+
+
+settings = Settings()
+DATABASE_URL = settings.database_url
 
 # Map / MapLibre GL JS Configuration
 # Base URL of the upstream map tile provider. This is proxied by the /api/tiles

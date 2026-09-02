@@ -2,7 +2,10 @@ fastapi[standard]==0.115.11
 Markdown>=3.7,<4.0
 pandas>=2.2.3
 pydantic==2.8.2
+pydantic-settings>=2.4,<3.0
 python-dotenv==1.0.1
 requests==2.32.3
 httpx>=0.27.0
 numpy-financial~=1.0.0
+SQLAlchemy[asyncio]>=2.0,<3.0
+aiosqlite>=0.20,<1.0

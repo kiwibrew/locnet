@@ -7,6 +7,7 @@ import logging
 import re
 import httpx
 from fastapi import Body
+from app.dependencies import DataRepositoryDependency
 from config import (
     MAP_TILE_BASE_URL,
     MAP_STYLE_PATH,
@@ -366,11 +367,11 @@ logging.basicConfig(level=logging.INFO)
         },
     },
 )
-async def get_site_text_by_lang(lang: str):
+async def get_site_text_by_lang(lang: str, repository: DataRepositoryDependency):
     try:
         if not isinstance(lang, str) or len(lang.strip()) != 2 or not lang.strip().isalpha():
             raise HTTPException(status_code=400, detail="Invalid language code. Use a two-letter ISO code (e.g. 'en').")
-        data = get_site_text_by_language(lang)
+        data = await get_site_text_by_language(repository, lang)
         return data
     except HTTPException:
         raise
@@ -413,9 +414,9 @@ async def get_site_text_by_lang(lang: str):
                 }
 
             })
-async def get_defaults_data():
+async def get_defaults_data(repository: DataRepositoryDependency):
     try:
-        data = get_defaults()
+        data = await get_defaults(repository)
         return data
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -454,10 +455,13 @@ async def get_defaults_data():
                      }
                  }
              })
-async def get_characteristics(request: CharacteristicsRequest):
+async def get_characteristics(
+    request: CharacteristicsRequest,
+    repository: DataRepositoryDependency,
+):
     try:
         iso_3 = request.iso_3.upper()
-        defaults_data = calculate_characteristics(iso_3)
+        defaults_data = await calculate_characteristics(repository, iso_3)
 
         if defaults_data is None:
             raise HTTPException(status_code=404, detail=f"Country with ISO3 '{iso_3}' not found.")
@@ -489,10 +493,10 @@ async def get_map_config():
             response_model=BoundsResponse,
             tags=["API GET Endpoints"],
             include_in_schema=False)
-async def get_country_bounds(iso_3: str):
+async def get_country_bounds(iso_3: str, repository: DataRepositoryDependency):
     try:
         iso_3 = iso_3.upper()
-        bounds = get_bounds(iso_3)
+        bounds = await get_bounds(repository, iso_3)
         if bounds is None:
             raise HTTPException(status_code=404, detail=f"Bounds for ISO3 '{iso_3}' not found.")
         return bounds
@@ -618,4 +622,3 @@ async def proxy_tiles(path: str, request: Request):
         media_type=content_type,
         headers=response_headers,
     )
-

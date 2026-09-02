@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from turtle import done
 from pathlib import Path
 from xml.etree.ElementTree import Element, SubElement
@@ -10,6 +11,8 @@ from markdown import markdown
 from markdown.extensions import Extension
 from markdown.treeprocessors import Treeprocessor
 from pydantic import BaseModel
+from app.dependencies import DataRepositoryDependency
+from app.database import engine
 from routers import lookups
 from routers.builder import router as builder_router
 from library.helpers import *
@@ -32,7 +35,6 @@ def render_markdown_document(filename: str) -> str:
     """Read a local Markdown document and convert it to HTML for a template."""
     markdown_source = (DOCUMENTS_DIRECTORY / filename).read_text(encoding="utf-8")
     return markdown(markdown_source, extensions=["extra", "toc"])
-
 
 class FaqAccordionTreeprocessor(Treeprocessor):
     """Group level-two headings and their content into FAQ disclosures."""
@@ -73,9 +75,16 @@ def render_faq_document(filename: str) -> str:
     )
 
 
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    yield
+    await engine.dispose()
+
+
 app = FastAPI(title='Community Network Modeler',
               description='An application to model simple community networks',
-              version='2.1')
+              version='2.1',
+              lifespan=lifespan)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/assets", StaticFiles(directory="spa/dist/assets"), name="assets")
@@ -89,23 +98,28 @@ templates = Jinja2Templates(directory="templates")
 spaTemplates = Jinja2Templates(directory="spa/dist")
 
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
-async def get_spa(request: Request, lang: str = 'en', ajax: bool = Query(False)):
+async def get_spa(
+    request: Request,
+    repository: DataRepositoryDependency,
+    lang: str = 'en',
+    ajax: bool = Query(False),
+):
     try:
         # Get the countries data
-        country_data = get_countries()
+        country_data = await get_countries(repository)
         # Get the UI text for the selected language
-        text_data = get_text()
+        text_data = await get_text(repository)
         selected_text = {item['element']: item[lang] for item in text_data}
-        frequencies = get_frequencies()
-        technologies = get_technologies()
-        midhaul_data = get_midhaul()
-        backhaul_data = get_backhaul()
-        tower_data = get_towers()
-        tower_details = get_tower_details()
-        all_net_types = get_network_types()
-        tech_data = get_tech_data()
-        paf_facilities_charge = get_paf_facilities_charge()
-        power_types = get_power()
+        frequencies = await get_frequencies(repository)
+        technologies = await get_technologies(repository)
+        midhaul_data = await get_midhaul(repository)
+        backhaul_data = await get_backhaul(repository)
+        tower_data = await get_towers(repository)
+        tower_details = await get_tower_details(repository)
+        all_net_types = await get_network_types(repository)
+        tech_data = await get_tech_data(repository)
+        paf_facilities_charge = await get_paf_facilities_charge(repository)
+        power_types = await get_power(repository)
 
         if ajax:
             # Return only the text data as JSON for AJAX requests
@@ -145,11 +159,14 @@ async def spa_post_handler(model_query: ModelQuery):
 
 @app.get("/documentation", response_class=HTMLResponse, include_in_schema=False)
 async def documentation_page(
-    request: Request, lang: str = 'en', embedded: bool = Query(False)
+    request: Request,
+    repository: DataRepositoryDependency,
+    lang: str = 'en',
+    embedded: bool = Query(False),
 ):
     try:
         # Get the UI text for the selected language
-        text_data = get_text()
+        text_data = await get_text(repository)
         selected_text = {item['element']: item[lang] for item in text_data}
         
         documentation_content = render_markdown_document("documentation.md")
@@ -167,10 +184,15 @@ async def documentation_page(
 
 
 @app.get("/qsg", response_class=HTMLResponse, include_in_schema=False)
-async def qsg_page(request: Request, lang: str = 'en', embedded: bool = Query(False)):
+async def qsg_page(
+    request: Request,
+    repository: DataRepositoryDependency,
+    lang: str = 'en',
+    embedded: bool = Query(False),
+):
     try:
         # Get the UI text for the selected language
-        text_data = get_text()
+        text_data = await get_text(repository)
         selected_text = {item['element']: item[lang] for item in text_data}
         
         qsg_content = render_markdown_document("qsg.md")
@@ -188,10 +210,15 @@ async def qsg_page(request: Request, lang: str = 'en', embedded: bool = Query(Fa
 
 
 @app.get("/faq", response_class=HTMLResponse, include_in_schema=False)
-async def faq_page(request: Request, lang: str = 'en', embedded: bool = Query(False)):
+async def faq_page(
+    request: Request,
+    repository: DataRepositoryDependency,
+    lang: str = 'en',
+    embedded: bool = Query(False),
+):
     try:
         # Get the UI text for the selected language
-        text_data = get_text()
+        text_data = await get_text(repository)
         selected_text = {item['element']: item[lang] for item in text_data}
 
         faq_content = render_faq_document("faq.md")

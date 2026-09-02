@@ -1,7 +1,9 @@
 import unittest
 from xml.etree import ElementTree
 
-from main import render_faq_document
+from markdown import markdown
+
+from main import FaqAccordionExtension, render_faq_document
 
 
 class FaqRenderingTests(unittest.TestCase):
@@ -22,11 +24,28 @@ class FaqRenderingTests(unittest.TestCase):
             self.assertIsNotNone(question.find("div[@class='faq-answer']"))
 
     def test_subheadings_remain_inside_their_question_answer(self):
-        rendered = render_faq_document("faq.md")
-        root = ElementTree.fromstring(f"<root>{rendered}</root>")
-        first_answer = root.find("details/div[@class='faq-answer']")
+        markdown_source = """# Frequently Asked Questions
 
-        self.assertIsNotNone(first_answer.find("h3"))
+## Example question
+
+Example answer.
+
+### Example subheading
+
+More answer content.
+"""
+        rendered = markdown(
+            markdown_source,
+            extensions=[FaqAccordionExtension()],
+        )
+        root = ElementTree.fromstring(f"<root>{rendered}</root>")
+        question = root.find("details")
+        answer = question.find("div[@class='faq-answer']")
+        subheading = answer.find("h3")
+
+        self.assertEqual(question.find("summary/h2").text, "Example question")
+        self.assertIsNotNone(subheading)
+        self.assertEqual(subheading.text, "Example subheading")
 
 
 if __name__ == "__main__":

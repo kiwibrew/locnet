@@ -3,12 +3,14 @@ services:
     image: locnet:main
     build:
       dockerfile: ./Dockerfile
+      target: production
     restart: always
     container_name: web-locnet
     env_file:
       - .env
     environment:
-      DATABASE_URL: sqlite+aiosqlite:////app/data/app.db
+      DATABASE_URL: sqlite+aiosqlite:////app/runtime/app.db
+      SEED_DATABASE_PATH: /usr/src/app/app/data/app.db
     develop:
       watch:
         - action: sync
@@ -20,4 +22,15 @@ services:
       - "8000:8000"
     volumes:
       - ./cache:/usr/src/app/cache
-      - ./app/data:/app/data
+      - ./runtime:/app/runtime
+
+  test:
+    image: locnet:test
+    build:
+      dockerfile: ./Dockerfile
+      target: test
+    environment:
+      DATABASE_URL: sqlite+aiosqlite:////app/test-runtime/app.db
+      SEED_DATABASE_PATH: /usr/src/app/app/data/app.db
+    tmpfs:
+      - /app/test-runtime

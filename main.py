@@ -1,5 +1,4 @@
 from contextlib import asynccontextmanager
-from turtle import done
 from pathlib import Path
 from xml.etree.ElementTree import Element, SubElement
 
@@ -127,23 +126,26 @@ async def get_spa(
 
         example_filenames = list_example_filenames(EXAMPLES_DIRECTORY)
 
-        return spaTemplates.TemplateResponse("index.html",
-                                          {"request": request,
-                                           "countries": country_data,
-                                           "text": text_data,
-                                           "selected_language": lang,
-                                           "example_filenames": example_filenames,
-                                           "frequencies": frequencies,
-                                           "technologies": technologies,
-                                           "network_types": all_net_types,
-                                           "power_types": power_types,
-                                           "midhaul_data": midhaul_data,
-                                           "backhaul_data": backhaul_data,
-                                           "tower_data": tower_data,
-                                           "tower_details": tower_details,
-                                           "tech_data": tech_data,
-                                           "paf_facilities_charge": paf_facilities_charge,
-                                          } )
+        return spaTemplates.TemplateResponse(
+            request=request,
+            name="index.html",
+            context={
+                "countries": country_data,
+                "text": text_data,
+                "selected_language": lang,
+                "example_filenames": example_filenames,
+                "frequencies": frequencies,
+                "technologies": technologies,
+                "network_types": all_net_types,
+                "power_types": power_types,
+                "midhaul_data": midhaul_data,
+                "backhaul_data": backhaul_data,
+                "tower_data": tower_data,
+                "tower_details": tower_details,
+                "tech_data": tech_data,
+                "paf_facilities_charge": paf_facilities_charge,
+            },
+        )
     except Exception as e:
         logging.error(f"Failed to load countries: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to load country data: {str(e)}")
@@ -154,7 +156,7 @@ class ModelQuery(BaseModel):
 
 @app.post("/spa-query", include_in_schema=False,)
 async def spa_post_handler(model_query: ModelQuery):
-    return JSONResponse({ done: True })
+    return JSONResponse({"done": True})
 
 
 @app.get("/documentation", response_class=HTMLResponse, include_in_schema=False)
@@ -171,13 +173,16 @@ async def documentation_page(
         
         documentation_content = render_markdown_document("documentation.md")
         
-        return templates.TemplateResponse("documentation.html",
-                                         {"request": request,
-                                          "text": selected_text,
-                                          "selected_language": lang,
-                                          "embedded": embedded,
-                                          "documentation_content": documentation_content}
-                                         )
+        return templates.TemplateResponse(
+            request=request,
+            name="documentation.html",
+            context={
+                "text": selected_text,
+                "selected_language": lang,
+                "embedded": embedded,
+                "documentation_content": documentation_content,
+            },
+        )
     except Exception as e:
         logging.error(f"Failed to load documentation: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to load documentation: {str(e)}")
@@ -197,13 +202,16 @@ async def qsg_page(
         
         qsg_content = render_markdown_document("qsg.md")
         
-        return templates.TemplateResponse("qsg.html",
-                                         {"request": request,
-                                          "text": selected_text,
-                                          "selected_language": lang,
-                                          "embedded": embedded,
-                                          "qsg_content": qsg_content}
-                                         )
+        return templates.TemplateResponse(
+            request=request,
+            name="qsg.html",
+            context={
+                "text": selected_text,
+                "selected_language": lang,
+                "embedded": embedded,
+                "qsg_content": qsg_content,
+            },
+        )
     except Exception as e:
         logging.error(f"Failed to load Quick Start Guide: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to load Quick Start Guide: {str(e)}")
@@ -223,13 +231,16 @@ async def faq_page(
 
         faq_content = render_faq_document("faq.md")
 
-        return templates.TemplateResponse("faq.html",
-                                          {"request": request,
-                                           "text": selected_text,
-                                           "selected_language": lang,
-                                           "embedded": embedded,
-                                           "faq_content": faq_content}
-                                          )
+        return templates.TemplateResponse(
+            request=request,
+            name="faq.html",
+            context={
+                "text": selected_text,
+                "selected_language": lang,
+                "embedded": embedded,
+                "faq_content": faq_content,
+            },
+        )
     except Exception as e:
         logging.error(f"Failed to load FAQ: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to load FAQ: {str(e)}")

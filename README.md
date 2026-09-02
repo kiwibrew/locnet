@@ -30,7 +30,8 @@
 - Vite build pipeline producing static assets in `spa/dist` served by FastAPI at `/assets`
 
 ## Data and integrations
-- Menu and lookup data are provided by a remote database accessible via API (see Environment and configuration). The application depends on this API connection to populate its menus.
+- Menu and lookup data come from the immutable SQLite seed at `app/data/app.db`.
+- Container startup copies the seed into the ignored `runtime/` directory when no runtime database exists, then applies Alembic migrations to that copy.
 - Coverage and population modelling uses the GLO-30 viewshed, ESA WorldCover, and WorldPop services.
 - Documentation/QSG content is now in git and is rendered into `/documentation` and `/qsg` respectively.
 
@@ -45,52 +46,99 @@
 
 ## Getting started
 Prerequisites
-- Python 3.11+
-- Node.js 24+ (only needed if you will modify/build the SPA)
-- Docker (optional) if you prefer containerised runs
+- Git
+- Docker Engine
+- Docker Compose
 
 ## Environment and configuration
-- The application depends on an API connection to a database holding all of its menus — please contact the maintainer to set up an API key for read access to that data.
-- Copy `locnet.env` (or `.env` template) and provide values for required variables. At minimum you will need read access credentials for the menu/lookup API. Coverage calculations also require `GLO30_API_URL`, `GLO30_API_TOKEN`, `ESAWC_API_URL`, `ESAWC_API_TOKEN`, `WPOP_API_URL`, and `WPOP_API_TOKEN`.
+- Copy `.env.example` to `.env` and provide the deployment values.
+- Coverage calculations require `GLO30_API_URL`, `GLO30_API_TOKEN`, `ESAWC_API_URL`, `ESAWC_API_TOKEN`, `WPOP_API_URL`, and `WPOP_API_TOKEN`.
 - Generated viewsheds are cached in `cache/geojson` by default; set `GEOJSON_CACHE_DIRECTORY` to a persistent volume path to override it. Entries expire after 30 days. When the cache exceeds 1 GB, least-recently-used entries are removed first.
 
-Install and run (local)
-1) Create and activate a virtual environment
-```
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\\Scripts\\activate
+Build and run through Docker Compose:
+
+```bash
+docker compose up --build
 ```
 
-2) Install dependencies
-```
-pip install -r requirements.txt
+Run the backend suite in its dedicated Python 3.14 test image:
+
+```bash
+docker compose build test
+docker compose run --rm test pytest
 ```
 
-3) Build the SPA (optional if `spa/dist` is already present)
-```
-cd spa
-npm ci
-npm run build
-cd ..
-```
+Open in your browser:
 
-4) Start the server (uvicorn via FastAPI standard)
-```
-uvicorn main:app --reload --port 8000
-```
-
-5) Open in your browser
 - App: http://localhost:8000/
 - OpenAPI (Swagger UI): http://localhost:8000/docs
 - Quick Start Guide: http://localhost:8000/qsg
 - Documentation: http://localhost:8000/documentation
 
-Run with Docker
-Build and run using Docker Compose:
-```
-docker-compose up --build
-```
-Then visit the same URLs as above (port may vary based on compose settings).
+## Production database operations
+
+The production database is `runtime/app.db`. Docker Compose bind-mounts the host `runtime/` directory into the application container.
+
+A normal image rebuild does not replace this file. At container startup, the entry point completes these actions:
+
+1. It checks for the runtime database.
+2. If the runtime database is absent, it copies `app/data/app.db` to `runtime/app.db`.
+3. If the runtime database exists, it does not copy the seed database.
+4. It applies pending Alembic migrations to the runtime database.
+5. It starts the application with the existing data.
+
+Thus, `docker compose up --build` keeps the production users, API tokens, caches, and other runtime data.
+
+### First deployment of the separate runtime database
+
+The production `docker-compose.yml` file is not in Git. A Git pull does not update this file.
+
+Complete these steps before the first deployment of this database layout:
+
+1. Stop the application.
+2. Back up the existing `app/data/app.db` file outside the repository.
+3. Pull the application changes.
+4. Copy the database backup to `runtime/app.db`.
+5. Update `docker-compose.yml` from `docker-compose.yml.example`.
+6. Make sure that `DATABASE_URL` points to `/app/runtime/app.db`.
+7. Make sure that Compose mounts `./runtime` at `/app/runtime`.
+8. Build and start the application.
+9. Examine the application and the Alembic revision before you remove the backup.
+
+Do not rely on the image build to transfer the old production database. Copy the stopped database explicitly.
+
+### Routine production update
+
+Use this procedure for each production update:
+
+1. Stop `web-locnet` before you copy the SQLite file.
+2. Copy `runtime/app.db` to a backup location outside `runtime/`.
+3. Pull the application changes.
+4. Review changes in `docker-compose.yml.example`.
+5. Apply necessary changes to the production `docker-compose.yml` file.
+6. Run `docker compose up --build -d`.
+7. Examine the application logs for Alembic errors.
+8. Test the application before you remove the backup.
+
+The entry point applies each pending migration once. A migration can change existing data, so keep a backup for each deployment.
+
+### Reference-data updates
+
+The file `app/data/app.db` is an immutable seed database. A rebuild does not copy a changed seed over an existing runtime database.
+
+Supply reference-data changes through an Alembic data migration or another explicit import process. Do not edit the production seed database.
+
+### Data-loss risks
+
+Production data can be lost in these conditions:
+
+- An operator deletes or replaces `runtime/app.db`.
+- The Compose mount points to a different host directory.
+- A new server starts without a copy of the existing `runtime/` directory.
+- A migration deletes or incorrectly changes data.
+- The SQLite file becomes corrupt and no usable backup exists.
+
+To move the application to a new server, stop the old application and transfer `runtime/app.db` before startup.
 
 Production docs and quick start
 - Quick Start Guide: https://locnet.io/qsg

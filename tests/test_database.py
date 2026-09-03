@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.pool import StaticPool
 
 from app.repositories import DataRepository
-from library.helpers import get_countries
+from app.services.reference_data import get_countries
 
 
 class DatabaseRepositoryTests(unittest.IsolatedAsyncioTestCase):

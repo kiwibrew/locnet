@@ -1,7 +1,8 @@
 import hashlib
+import logging
 import secrets
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from pydantic import EmailStr, TypeAdapter
 from sqlalchemy.exc import IntegrityError
@@ -13,6 +14,7 @@ from app.services.authentication import (
     PasswordHasher,
     SessionTokenService,
 )
+from app.services.email import PasswordResetSender
 
 
 class UserServiceError(Exception):
@@ -44,6 +46,10 @@ class ApiAccessNotEnabled(UserServiceError):
 
 
 class LifecycleOperationProhibited(UserServiceError):
+    pass
+
+
+class InvalidResetCode(UserServiceError):
     pass
 
 
@@ -99,6 +105,14 @@ class UserService:
         except IntegrityError as error:
             raise EmailAlreadyExists from error
 
+    async def visible_users(self, current_user: User) -> list[User]:
+        if current_user.is_admin:
+            return await self.repository.list_users()
+        return [current_user]
+
+    async def get_user(self, user_id: int) -> User:
+        return await self._get_user(user_id)
+
     async def authenticate_password(self, email: str, password: str) -> User:
         normalized_email = self.normalize_email(email)
         user = await self.repository.get_by_email(normalized_email)
@@ -136,6 +150,47 @@ class UserService:
             or not user.api_access_enabled
         ):
             raise InvalidCredentials
+        return user
+
+    async def request_password_reset(
+        self,
+        email: str,
+        sender: PasswordResetSender,
+    ) -> None:
+        normalized_email = self.normalize_email(email)
+        user = await self.repository.get_by_email(normalized_email)
+        if user is None or not user.is_active:
+            return
+
+        code = secrets.token_urlsafe(48)
+        user.reset_token_hash = self.token_hash(code)
+        user.reset_token_expires_at = datetime.now(UTC) + timedelta(minutes=30)
+        await self.repository.session.flush()
+
+        try:
+            await sender.send_password_reset(user.email, code)
+        except Exception:
+            user.reset_token_hash = None
+            user.reset_token_expires_at = None
+            await self.repository.session.flush()
+            logging.exception("Password-reset delivery failed")
+
+    async def reset_password(self, code: str, new_password: str) -> User:
+        self.validate_password(new_password)
+        user = await self.repository.get_by_reset_token_hash(self.token_hash(code))
+        if user is None or not user.is_active or user.reset_token_expires_at is None:
+            raise InvalidResetCode
+
+        expires_at = user.reset_token_expires_at
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=UTC)
+        if expires_at <= datetime.now(UTC):
+            raise InvalidResetCode
+
+        user.password_hash = self.password_hasher.hash(new_password)
+        user.reset_token_hash = None
+        user.reset_token_expires_at = None
+        await self.repository.session.flush()
         return user
 
     async def enable_api_access(self, user_id: int) -> IssuedApiToken:
@@ -199,6 +254,14 @@ class UserService:
         user = await self._get_user(user_id)
         if user.id == actor_user_id:
             raise LifecycleOperationProhibited
+        if user.is_admin and user.is_active:
+            await self._protect_last_active_admin()
+        await self.repository.delete(user)
+
+    async def delete_user_for_operations(self, email: str) -> None:
+        user = await self.repository.get_by_email(self.normalize_email(email))
+        if user is None:
+            raise UserNotFound
         if user.is_admin and user.is_active:
             await self._protect_last_active_admin()
         await self.repository.delete(user)

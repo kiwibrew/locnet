@@ -3,7 +3,7 @@ from xml.etree import ElementTree
 
 from markdown import markdown
 
-from main import FaqAccordionExtension, render_faq_document
+from app.main import FaqAccordionExtension, render_faq_document
 
 
 class FaqRenderingTests(unittest.TestCase):

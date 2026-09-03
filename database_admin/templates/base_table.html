@@ -1,0 +1,15 @@
+{% extends "base_tables.html" %}
+
+{% block content_title %}
+  <a href="{{ url_for('index') }}">Application data</a> &mdash; <span title="{{ table }}">{{ table|truncate(24, True, leeway=2) }}</span>
+{% endblock %}
+
+{% block content %}
+  <ul class="nav nav-tabs">
+    <li class="nav-item"><a class="nav-link{% block content_tab_class %}{% endblock %}" href="{{ url_for('table_content', table=table) }}">Content</a></li>
+    <li class="nav-item"><a class="nav-link{% block insert_tab_class %}{% endblock %}" href="{{ url_for('table_insert', table=table) }}">Insert</a></li>
+    <li class="nav-item"><a class="nav-link{% block import_tab_class %}{% endblock %}" href="{{ url_for('table_import', table=table) }}">Import</a></li>
+    <li class="nav-item"><a class="nav-link{% block export_tab_class %}{% endblock %}" href="{{ url_for('table_export', table=table) }}">Export</a></li>
+  </ul>
+  <div style="margin-top: 20px;">{% block inner_content %}{% endblock %}</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ text['banner'] }} - Documentation</title>
+    <!-- Favico -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <!-- Local Stylesheet -->
+    <link rel="stylesheet" href="/static/locnet_styles.css">
+    <base href="/documentation-assets/">
+</head>
+<body>
+    <div class="content-spacing">
+        {% if not embedded %}
+        <nav class="document-navigation" aria-label="Document navigation">
+            <a class="document-back-link" href="{{ back_href }}">Back to main page</a>
+        </nav>
+        {% endif %}
+        <!-- Documentation content will be rendered here -->
+        {{ documentation_content|safe }}
+    </div>
+</body>
+</html>

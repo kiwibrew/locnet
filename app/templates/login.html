@@ -1,0 +1,87 @@
+{# Public sign-in page. #}
+{% extends "base.html" %}
+{% block title %}Sign in | Community Network Builder{% endblock %}
+{% block head %}
+  <style>
+    .landing-language-label {
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+    }
+
+    .landing-language-select {
+      padding: .5rem;
+      background: var(--app-control-background);
+      border: 1px solid var(--app-control-border);
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .landing-language-select:hover,
+    .landing-language-select:focus {
+      background: var(--app-control-focus);
+    }
+
+    .landing-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .landing-introduction {
+      line-height: 1.5;
+    }
+
+    .sign-in-panel {
+      width: 100%;
+      max-width: 420px;
+      margin-top: 1.25rem;
+    }
+  </style>
+{% endblock %}
+{% block header_tools %}
+  <form method="get" action="/">
+    <label class="landing-language-label">
+      <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 420 420" stroke="#000" fill="none" aria-hidden="true">
+        <path stroke-width="26" d="M209,15a195,195 0 1,0 2,0z" />
+        <path stroke-width="18" d="m210,15v390m195-195H15M59,90a260,260 0 1,0 302,0 m0,240 a260,260 0 1,0-302,0M195,20a250,250 0 1,0 0,382 m30,0 a250,250 0 1,0 0-382" />
+      </svg>
+      <span class="visually-hidden">Choose language</span>
+      <select name="lang" class="landing-language-select" aria-label="Choose language" onchange="this.form.submit()">
+        {% for code, name in languages.items() %}
+          <option value="{{ code }}"{% if code == selected_language %} selected{% endif %}>{{ name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+  </form>
+{% endblock %}
+{% block content %}
+  <nav class="landing-actions" aria-label="Help and documentation">
+    <a class="app-button" href="/qsg?lang={{ selected_language }}">Quick Start</a>
+    <a class="app-button" href="/documentation?lang={{ selected_language }}">Documentation</a>
+    <a class="app-button" href="/faq?lang={{ selected_language }}">FAQ</a>
+  </nav>
+  <section class="landing-introduction" aria-label="Introduction">
+    {{ text['welcome']|safe }}
+  </section>
+  <section class="sign-in-panel" aria-labelledby="sign-in-heading">
+    <h2 id="sign-in-heading" class="h3 mb-3">Sign in</h2>
+    {% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
+    {% if reset_complete %}<div class="alert alert-success" role="status">Your password was changed. You can now sign in.</div>{% endif %}
+    <form method="post" action="/login">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="lang" value="{{ selected_language }}">
+      <div class="mb-3">
+        <label for="email" class="form-label">Email</label>
+        <input id="email" name="email" type="email" class="form-control" maxlength="320" required autocomplete="username">
+      </div>
+      <div class="mb-3">
+        <label for="password" class="form-label">Password</label>
+        <input id="password" name="password" type="password" class="form-control" minlength="8" maxlength="128" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="app-button">Sign in</button>
+      <a class="d-block mt-3" href="/forgot-password">Forgot your password?</a>
+    </form>
+  </section>
+{% endblock %}

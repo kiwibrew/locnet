@@ -31,11 +31,13 @@
   margin: 0;
 }
 
-.navMenu a {
+.navMenu a,
+.navMenu button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0.5em 0.75em;
+  font: inherit;
   color: #000;
   background: var(--interactive-box-background);
   border: var(--interactive-box-toggle-selected-border);
@@ -47,13 +49,20 @@
 }
 
 .navMenu a:hover,
-.navMenu a:focus {
+.navMenu a:focus,
+.navMenu button:hover,
+.navMenu button:focus {
   background: var(--focus-background-color);
 }
 
-.navMenu a:focus-visible {
+.navMenu a:focus-visible,
+.navMenu button:focus-visible {
   outline: 2px solid #058;
   outline-offset: 2px;
+}
+
+.navMenu form {
+  margin: 0;
 }
 
 .pageTitle {

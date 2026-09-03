@@ -70,6 +70,12 @@
     <script type="application/json" id="paf_facilities_charge">
       {{ paf_facilities_charge | tojson }}
     </script>
+    <script type="application/json" id="current_user">
+      {{ current_user | tojson }}
+    </script>
+    <script type="application/json" id="csrf_token">
+      {{ csrf_token | tojson }}
+    </script>
 
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>

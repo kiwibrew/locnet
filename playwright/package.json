@@ -2,6 +2,9 @@
   "name": "locnet-playwright",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": ">=24 <25"
+  },
   "scripts": {
     "test": "npm run test:types && npm run test:playwright",
     "test:types": "tsc -b",

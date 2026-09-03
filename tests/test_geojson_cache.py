@@ -5,7 +5,7 @@ import unittest
 from datetime import timedelta
 from tempfile import TemporaryDirectory
 
-from library.geojson_cache import (
+from app.services.geojson_cache import (
     GEOJSON_CACHE_MAX_AGE,
     GEOJSON_CACHE_MAX_SIZE_BYTES,
     GeoJSONCache,

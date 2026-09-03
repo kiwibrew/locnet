@@ -1,4 +1,5 @@
-import { ApiClient, type BuilderInput } from './api-generated-client';
+import type { BuilderInput } from './api-generated-client';
+import { AuthenticatedApiClient } from '../auth/apiClient';
 import type { SubmitHandler } from '../form/useStaticFormTs';
 import type { EditableLocNetForm } from './formData';
 import {
@@ -19,6 +20,7 @@ import {
 } from '../form/NodeTypes/NetworkElements.utils';
 import type { NetworkElement } from '../form/NodeTypes/NetworkElements';
 import { generateRandomKey } from '../form/key';
+import { authenticatedHeaders } from '../auth/session';
 
 declare global {
   interface Window {
@@ -45,10 +47,10 @@ export const useLocNetServerSubmit = () => {
         return;
       }
 
-      immerForm.nodes[2].children[0].isButtonVisible = true;
-      immerForm.nodes[2].children[0].isOpen = false;
-      immerForm.nodes[3].isLoading = true;
-      immerForm.nodes[4].isOpen = false;
+      immerForm.nodes[1].children[0].isButtonVisible = true;
+      immerForm.nodes[1].children[0].isOpen = false;
+      immerForm.nodes[2].isLoading = true;
+      immerForm.nodes[3].isOpen = false;
       immerForm.api.modelerAPIOutput = undefined;
       queueFormSideEffect('api.modelerAPIOutput', submitModel(builderInput));
       window.scrollTo(0, 0);
@@ -59,7 +61,7 @@ export const useLocNetServerSubmit = () => {
 export const submitModel = async (
   builderInput: BuilderInput,
 ): Promise<EditableLocNetForm['api']['modelerAPIOutput']> => {
-  const api = new ApiClient();
+  const api = new AuthenticatedApiClient({ headers: authenticatedHeaders() });
   try {
     const modelResult =
       await api.apiPOSTEndpoints.modelerApiApiModelerPost(builderInput);

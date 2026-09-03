@@ -1,8 +1,8 @@
 import math
 import unittest
 
-from library.app_logic import calculate_access_users_supported
-from library.classes import BuilderInput
+from app.schemas.modeling import BuilderInput
+from app.services.modeling import calculate_access_users_supported
 
 
 def builder_payload():

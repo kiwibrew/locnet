@@ -1,0 +1,137 @@
+{# Shared authentication and account layout. #}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Community Network Builder{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+      :root {
+        --app-background: #eee;
+        --app-control-background: #fff;
+        --app-control-border: #ccc;
+        --app-control-focus: #efe;
+      }
+
+      body {
+        margin: 0;
+        color: #222;
+        background: var(--app-background);
+        font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+      }
+
+      .app-shell {
+        width: 100%;
+        max-width: 1024px;
+        margin: 0 auto;
+        padding: 0 1rem 2rem;
+      }
+
+      .app-header {
+        display: flex;
+        flex-direction: column;
+        gap: .75rem;
+        padding-top: .35rem;
+      }
+
+      .app-title-row,
+      .app-navigation {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .app-title-row {
+        justify-content: space-between;
+      }
+
+      .app-title {
+        color: #222;
+        font-size: 2rem;
+        font-weight: 100;
+        text-decoration: none;
+      }
+
+      .app-navigation {
+        flex-wrap: wrap;
+      }
+
+      .app-user {
+        margin-left: auto;
+      }
+
+      .app-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: .5em .75em;
+        color: #000;
+        background: var(--app-control-background);
+        border: 1px solid var(--app-control-border);
+        border-radius: 4px;
+        cursor: pointer;
+        font: inherit;
+        text-decoration: none;
+        white-space: nowrap;
+      }
+
+      .app-button:hover,
+      .app-button:focus {
+        color: #000;
+        background: var(--app-control-focus);
+      }
+
+      .app-button:focus-visible {
+        outline: 2px solid #058;
+        outline-offset: 2px;
+      }
+
+      .app-main {
+        padding-top: 1rem;
+      }
+
+      @media (max-width: 600px) {
+        .app-title-row {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .app-user {
+          width: 100%;
+          margin-left: 0;
+        }
+      }
+    </style>
+    {% block head %}{% endblock %}
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="app-header">
+        <div class="app-title-row">
+          <a class="app-title" href="{% if current_user %}/app{% else %}/{% endif %}">Community Network Builder</a>
+          {% block header_tools %}{% endblock %}
+        </div>
+        {% if current_user %}
+          <nav class="app-navigation" aria-label="Account navigation">
+            {% if current_user.api_access_enabled and not current_user.is_admin %}
+              <a class="app-button" href="/docs">API documentation</a>
+            {% endif %}
+            {% if current_user.is_admin %}
+              <a class="app-button" href="/admin/database/">Database Admin</a>
+            {% endif %}
+            <a class="app-button" href="/manage-users">Manage users</a>
+            <span class="app-user">{{ current_user.email }}</span>
+            <form method="post" action="/logout" class="m-0">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <button type="submit" class="app-button">Sign out</button>
+            </form>
+          </nav>
+        {% endif %}
+      </header>
+      <main class="app-main">
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </body>
+</html>

@@ -47,6 +47,9 @@ const CoverageMap = ({ coverageMap, index }: CoverageMapProps) => {
     let cancelled = false;
     let map: MapLibreMap | undefined;
     const sourceId = `result-coverage-${index}`;
+    const statusTimeout = window.setTimeout(() => {
+      if (!cancelled) setStatus('unavailable');
+    }, 10_000);
 
     getMapStyleUrl()
       .then((styleUrl) => {
@@ -67,6 +70,24 @@ const CoverageMap = ({ coverageMap, index }: CoverageMapProps) => {
 
         map.on('load', () => {
           if (!map || cancelled) return;
+          map.once('idle', () => {
+            if (!map || cancelled) return;
+            try {
+              const dataUrl = map.getCanvas().toDataURL('image/png');
+              if (!dataUrl || dataUrl === 'data:,') {
+                setStatus('unavailable');
+                return;
+              }
+              setSnapshotDataUrl(dataUrl);
+              setStatus('ready');
+              window.clearTimeout(statusTimeout);
+            } catch (error) {
+              // Cross-origin tile servers can make a WebGL canvas unreadable.
+              // Keep the interactive map available even if PDF capture fails.
+              console.error('Unable to capture coverage map for PDF', error);
+              setStatus('unavailable');
+            }
+          });
           map.addSource(sourceId, { type: 'geojson', data: geojson });
           map.addLayer({
             id: sourceId,
@@ -88,23 +109,6 @@ const CoverageMap = ({ coverageMap, index }: CoverageMapProps) => {
             });
           }
 
-          map.once('idle', () => {
-            if (!map || cancelled) return;
-            try {
-              const dataUrl = map.getCanvas().toDataURL('image/png');
-              if (!dataUrl || dataUrl === 'data:,') {
-                setStatus('unavailable');
-                return;
-              }
-              setSnapshotDataUrl(dataUrl);
-              setStatus('ready');
-            } catch (error) {
-              // Cross-origin tile servers can make a WebGL canvas unreadable.
-              // Keep the interactive map available even if PDF capture fails.
-              console.error('Unable to capture coverage map for PDF', error);
-              setStatus('unavailable');
-            }
-          });
         });
       })
       .catch((error) => {
@@ -114,6 +118,7 @@ const CoverageMap = ({ coverageMap, index }: CoverageMapProps) => {
 
     return () => {
       cancelled = true;
+      window.clearTimeout(statusTimeout);
       map?.remove();
     };
   }, [coverageMap.latitude, coverageMap.longitude, geojson, index, mapContainer]);

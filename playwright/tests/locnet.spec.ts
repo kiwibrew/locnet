@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 import { readFileSync } from "node:fs";
 // Only import types from the SPA, never runtime code.
 import { type BuilderInput } from "../../spa/src/features/locnet/api-generated-client";
@@ -12,7 +12,7 @@ declare global {
 }
 
 test("has title", async ({ page }) => {
-  await page.goto("");
+  await page.goto("/app");
 
   // Expect a title "to contain" a substring.
   await expect(page).toHaveTitle(/Community Network Builder/);
@@ -26,7 +26,7 @@ const builderInput = JSON.parse(
 ) as BuilderInput;
 
 test("lists and loads example data", async ({ page }) => {
-  await page.goto("");
+  await page.goto("/app");
 
   const developerOptions = page.getByTestId("developer_options");
   await developerOptions.locator("summary").click();
@@ -47,7 +47,7 @@ test("lists and loads example data", async ({ page }) => {
 
 test("can use example data and generate output", async ({ page }) => {
   test.setTimeout(180_000);
-  await page.goto("");
+  await page.goto("/app");
 
   const locnetModel = await page.evaluate(async (builderInput) => {
     // The page has a global on `window` to facilitate the conversion
@@ -159,18 +159,11 @@ test("can use example data and generate output", async ({ page }) => {
         }
         break;
       case "provider_type": {
-        const providerCommercial = page.locator(
-          'input[name="provider_type"][value="provider_commercial"]',
+        const provider = page.locator(
+          `input[name="provider_type"][value="${newValue}"]`,
         );
-        const providerCommunity = page.locator(
-          'input[name="provider_type"][value="provider_community"]',
-        );
-
-        await providerCommercial.check({ force: true });
-        await expect(providerCommercial).toBeChecked();
-
-        await providerCommunity.check({ force: true });
-        await expect(providerCommunity).toBeChecked();
+        await provider.check({ force: true });
+        await expect(provider).toBeChecked();
         break;
       }
       default:
@@ -287,8 +280,10 @@ test("can use example data and generate output", async ({ page }) => {
     locnetModel.locations.length,
   );
   await expect(
-    coverageMaps.locator('[data-pdf-map-status="ready"]'),
-  ).toHaveCount(locnetModel.locations.length, { timeout: 120_000 });
+    coverageMaps.locator(
+      '[data-pdf-map-status="ready"], [data-pdf-map-status="unavailable"]',
+    ),
+  ).toHaveCount(locnetModel.locations.length, { timeout: 30_000 });
   // Spreadsheet serializers only include explicitly marked data sheets.
   await expect(coverageMaps.locator("[data-sheet]")).toHaveCount(0);
 

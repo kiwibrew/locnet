@@ -1,0 +1,51 @@
+{# User-management page. #}
+{% extends "base.html" %}
+{% block title %}Manage users | Community Network Builder{% endblock %}
+{% block content %}
+  <h1 class="h3 mb-3">Manage users</h1>
+  {% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
+  {% if current_user.is_admin %}
+    <section class="card card-body mb-4">
+      <h2 class="h5">Create user</h2>
+      <form method="post" action="/users/create" class="row g-3">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <div class="col-md-5"><label class="form-label" for="new-email">Email</label><input class="form-control" id="new-email" name="email" type="email" required></div>
+        <div class="col-md-5"><label class="form-label" for="new-password">Password</label><input class="form-control" id="new-password" name="password" type="password" minlength="8" maxlength="128" required></div>
+        <div class="col-md-2 d-flex align-items-end"><div class="form-check mb-2"><input class="form-check-input" id="new-admin" name="is_admin" type="checkbox" value="true"><label class="form-check-label" for="new-admin">Administrator</label></div></div>
+        <div><button class="btn btn-primary" type="submit">Create user</button></div>
+      </form>
+    </section>
+  {% endif %}
+  <div class="table-responsive">
+    <table class="table align-middle">
+      <thead><tr><th>Email</th><th>Status</th><th>Role</th><th>API access</th>{% if current_user.is_admin %}<th>Actions</th>{% endif %}</tr></thead>
+      <tbody>
+      {% for user in users %}
+        <tr>
+          <td>{{ user.email }}</td>
+          <td>{{ "Active" if user.is_active else "Inactive" }}</td>
+          <td>{{ "Administrator" if user.is_admin else "Normal user" }}</td>
+          <td>{{ "Enabled" if user.api_access_enabled else "Disabled" }}</td>
+          {% if current_user.is_admin %}
+          <td><div class="d-flex flex-wrap gap-2">
+            {% if not user.is_admin %}
+              {% if user.api_access_enabled %}
+                <form method="post" action="/users/{{ user.id }}/disable-api"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-outline-secondary btn-sm" type="submit">Disable API</button></form>
+                <form method="post" action="/users/{{ user.id }}/regen-token" onsubmit="return confirm('Replace this API token?')"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-outline-secondary btn-sm" type="submit">Regenerate token</button></form>
+              {% else %}
+                <form method="post" action="/users/{{ user.id }}/enable-api"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-outline-secondary btn-sm" type="submit">Enable API</button></form>
+              {% endif %}
+            {% endif %}
+            {% if user.id != current_user.id %}
+              <form method="post" action="/users/{{ user.id }}/toggle-active"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-outline-secondary btn-sm" type="submit">{{ "Deactivate" if user.is_active else "Activate" }}</button></form>
+              <form method="post" action="/users/{{ user.id }}/toggle-admin"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-outline-secondary btn-sm" type="submit">{{ "Remove administrator" if user.is_admin else "Make administrator" }}</button></form>
+              <form method="post" action="/users/{{ user.id }}/delete" onsubmit="return confirm('Delete {{ user.email }}?')"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-danger btn-sm" type="submit">Delete</button></form>
+            {% endif %}
+          </div></td>
+          {% endif %}
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

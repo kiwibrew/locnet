@@ -1,11 +1,9 @@
-import {
-  ApiClient,
-  type BuilderInput,
-  type CharacteristicsRequest,
-} from './api-generated-client';
+import type { BuilderInput, CharacteristicsRequest } from './api-generated-client';
+import { AuthenticatedApiClient } from '../auth/apiClient';
 import { boundsResponseSchema, builderInputSchema } from './api-generated-zod';
 import type { EditableLocNetForm } from './formData';
 import { debouncePromise } from './utils';
+import { authenticatedHeaders } from '../auth/session';
 
 const API_DEBOUNCE_TIME_MS = 200;
 
@@ -19,7 +17,8 @@ const getCharacteristicsInner = async (
     characteristicsAbortController.abort();
   }
   characteristicsAbortController = new AbortController();
-  const apiClient = new ApiClient({
+  const apiClient = new AuthenticatedApiClient({
+    headers: authenticatedHeaders(),
     // @ts-expect-error this is not in typing but seems to work
     signal: characteristicsAbortController.signal,
   });
@@ -84,7 +83,10 @@ export const validateBuilderInput = async (
 ): Promise<BuilderInput> => {
   const response = await fetch('/api/modeler/validate', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...authenticatedHeaders(),
+    },
     body: JSON.stringify(input),
   });
 

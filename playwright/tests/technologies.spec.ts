@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 // Only import types from the SPA, never code
 import { type BuilderInput } from "../../spa/src/features/locnet/api-generated-client";
 import { type LocNetModel } from "../../spa/src/features/locnet/model";
@@ -9,16 +9,17 @@ import { assertNever } from "./typescript";
 
 
 test("can select technologies", async ({ page }) => {
-  await page.goto("");
-  await page.getByTestId("sel_country").selectOption("NZL");
-
-  await expect(page.getByTestId("introduction")).toHaveText("Introduction");
+  await page.goto("/app");
+  const countrySelector = page.getByTestId("sel_country");
+  await expect(countrySelector).toBeVisible();
+  await expect(page.getByTestId("introduction")).toHaveCount(0);
+  await countrySelector.selectOption("NZL");
 });
 
 test("requires a technology before adding a network location", async ({
   page,
 }) => {
-  await page.goto("");
+  await page.goto("/app");
   await page.getByTestId("sel_country").selectOption("NZL");
   await page.getByTestId("net_elements").click();
 

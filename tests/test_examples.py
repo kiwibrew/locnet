@@ -2,8 +2,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from library.classes import BuilderInput
-from main import EXAMPLES_DIRECTORY, list_example_filenames
+from app.main import EXAMPLES_DIRECTORY, list_example_filenames
+from app.schemas.modeling import BuilderInput
 
 
 class ExampleFilesTests(unittest.TestCase):

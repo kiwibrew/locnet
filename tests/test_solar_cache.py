@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, Mock, patch
 import requests
 from fastapi import HTTPException
 
-from library.supply import NASA_POWER_ERROR_DETAIL, get_solar_statistics
+from app.services.power import NASA_POWER_ERROR_DETAIL, get_solar_statistics
 
 
 MONTHS = (
@@ -74,7 +74,7 @@ class SolarCacheTests(unittest.IsolatedAsyncioTestCase):
         }
 
         repository = self.repository([cache_record])
-        with patch("library.supply.requests.get") as nasa_get:
+        with patch("app.services.power.requests.get") as nasa_get:
             solar_stats = await get_solar_statistics(
                 repository, -36.854, 174.764
             )
@@ -90,7 +90,7 @@ class SolarCacheTests(unittest.IsolatedAsyncioTestCase):
     async def test_cache_miss_fetches_nasa_and_stores_rounded_coordinates(self):
         repository = self.repository([])
         with patch(
-            "library.supply.requests.get", return_value=FakeResponse(nasa_payload())
+            "app.services.power.requests.get", return_value=FakeResponse(nasa_payload())
         ) as nasa_get:
             solar_stats = await get_solar_statistics(
                 repository, -36.854, 174.764
@@ -117,7 +117,7 @@ class SolarCacheTests(unittest.IsolatedAsyncioTestCase):
         }
         repository = self.repository([incomplete_cache_record])
         with patch(
-            "library.supply.requests.get", return_value=FakeResponse(nasa_payload())
+            "app.services.power.requests.get", return_value=FakeResponse(nasa_payload())
         ) as nasa_get:
             solar_stats = await get_solar_statistics(repository, -36.85, 174.76)
 
@@ -130,7 +130,7 @@ class SolarCacheTests(unittest.IsolatedAsyncioTestCase):
         temperatures["NOV"] = -999.0
         temperatures["DEC"] = -999.0
         repository = self.repository([])
-        with patch("library.supply.requests.get", return_value=FakeResponse(payload)):
+        with patch("app.services.power.requests.get", return_value=FakeResponse(payload)):
             solar_stats = await get_solar_statistics(repository, -36.85, 174.76)
 
         self.assertAlmostEqual(solar_stats["avg_temp"], 10.431)
@@ -140,7 +140,7 @@ class SolarCacheTests(unittest.IsolatedAsyncioTestCase):
     async def test_nasa_request_failure_is_returned_as_the_expected_502(self):
         repository = self.repository([])
         with patch(
-            "library.supply.requests.get",
+            "app.services.power.requests.get",
             side_effect=requests.Timeout("timed out"),
         ):
             with self.assertRaises(HTTPException) as raised:
@@ -152,7 +152,7 @@ class SolarCacheTests(unittest.IsolatedAsyncioTestCase):
     async def test_incomplete_nasa_payload_is_returned_as_the_expected_502(self):
         repository = self.repository([])
         with patch(
-            "library.supply.requests.get",
+            "app.services.power.requests.get",
             return_value=FakeResponse({"properties": None}),
         ):
             with self.assertRaises(HTTPException) as raised:

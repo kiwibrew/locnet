@@ -5,7 +5,7 @@ from tempfile import NamedTemporaryFile
 
 from sqlalchemy.engine import make_url
 
-from config import settings
+from app.config import settings
 
 
 def runtime_database_path(database_url: str) -> Path:

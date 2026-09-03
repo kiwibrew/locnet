@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block sidebar %}
+  <input class="form-control form-control-sm" id="table-search" placeholder="table name..." type="text" />
+  <ul class="nav flex-column nav-pills" role="tablist">
+    {% for table_name in allowed_tables %}
+      <li class="nav-item table-link">
+        <a class="nav-link{% if table and table_name == table %} active{% endif %}" href="{{ url_for('table_content', table=table_name) }}" title="{{ table_name }}">{{ table_name|truncate(24, True, leeway=2) }}</a>
+      </li>
+    {% endfor %}
+  </ul>
+{% endblock %}

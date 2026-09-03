@@ -1,0 +1,10 @@
+{# One-time persistent-token response. #}
+{% extends "base.html" %}
+{% block title %}API token | Community Network Builder{% endblock %}
+{% block content %}
+  <h1 class="h3">API token for {{ user.email }}</h1>
+  <div class="alert alert-warning" role="alert">Copy this token now. The application will not show it again.</div>
+  <label class="form-label" for="api-token">API token</label>
+  <textarea class="form-control font-monospace" id="api-token" rows="3" readonly>{{ token }}</textarea>
+  <a class="btn btn-primary mt-3" href="/manage-users">Return to user management</a>
+{% endblock %}

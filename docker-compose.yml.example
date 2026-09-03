@@ -18,11 +18,28 @@ services:
           target: /usr/src/app/spa/dist
           ignore:
             - spa/node_modules/
-    ports:
-      - "8000:8000"
     volumes:
       - ./cache:/usr/src/app/cache
       - ./runtime:/app/runtime
+
+  sqlite-web:
+    image: locnet:sqlite-web-0.6.4
+    build:
+      context: ./database_admin
+    restart: always
+    volumes:
+      - ./runtime:/app/runtime:rw
+
+  proxy:
+    image: nginx:1.27.4-alpine
+    restart: always
+    depends_on:
+      - web-locnet
+      - sqlite-web
+    ports:
+      - "8000:80"
+    volumes:
+      - ./nginx/locnet.conf:/etc/nginx/conf.d/default.conf:ro
 
   test:
     image: locnet:test
@@ -32,5 +49,92 @@ services:
     environment:
       DATABASE_URL: sqlite+aiosqlite:////app/test-runtime/app.db
       SEED_DATABASE_PATH: /usr/src/app/app/data/app.db
+      JWT_SECRET: test-only-jwt-secret
     tmpfs:
       - /app/test-runtime
+    profiles:
+      - test
+
+  spa:
+    image: node:24-trixie
+    working_dir: /workspace/spa
+    command: npm test
+    volumes:
+      - ./spa:/workspace/spa
+      - spa-node-modules:/workspace/spa/node_modules
+    profiles:
+      - tools
+
+  test-web:
+    image: locnet:test
+    build:
+      dockerfile: ./Dockerfile
+      target: test
+    command:
+      - sh
+      - -c
+      - python -m app.e2e_seed && fastapi run app/main.py
+    environment:
+      DATABASE_URL: sqlite+aiosqlite:////app/e2e-runtime/app.db
+      SEED_DATABASE_PATH: /usr/src/app/app/data/app.db
+      JWT_SECRET: test-only-jwt-secret
+      E2E_ADMIN_EMAIL: admin-e2e@example.com
+      E2E_ADMIN_PASSWORD: admin-password
+      E2E_USER_EMAIL: user-e2e@example.com
+      E2E_USER_PASSWORD: user-password
+      GLO30_API_URL: http://e2e-external:8000
+      GLO30_API_TOKEN: e2e-token
+      ESAWC_API_URL: http://e2e-external:8000
+      ESAWC_API_TOKEN: e2e-token
+      WPOP_API_URL: http://e2e-external:8000
+      WPOP_API_TOKEN: e2e-token
+      MAP_TILE_BASE_URL: http://e2e-external:8000
+    tmpfs:
+      - /app/e2e-runtime
+    ports:
+      - "8011:8000"
+    profiles:
+      - playwright
+    depends_on:
+      e2e-external:
+        condition: service_healthy
+
+  e2e-external:
+    image: locnet:test
+    build:
+      dockerfile: ./Dockerfile
+      target: test
+    command: fastapi run app/e2e_external.py
+    environment:
+      DATABASE_URL: sqlite+aiosqlite:////app/e2e-external-runtime/app.db
+      SEED_DATABASE_PATH: /usr/src/app/app/data/app.db
+    tmpfs:
+      - /app/e2e-external-runtime
+    profiles:
+      - playwright
+
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.61.1-noble
+    working_dir: /workspace/playwright
+    command: npm test
+    depends_on:
+      test-web:
+        condition: service_healthy
+    environment:
+      PLAYWRIGHT_BASE_URL: http://test-web:8000
+      CI: "${CI:-}"
+      E2E_ADMIN_EMAIL: admin-e2e@example.com
+      E2E_ADMIN_PASSWORD: admin-password
+      E2E_USER_EMAIL: user-e2e@example.com
+      E2E_USER_PASSWORD: user-password
+    volumes:
+      - ./playwright:/workspace/playwright
+      - ./spa:/workspace/spa:ro
+      - ./docs:/workspace/docs:ro
+      - playwright-node-modules:/workspace/playwright/node_modules
+    profiles:
+      - playwright
+
+volumes:
+  spa-node-modules:
+  playwright-node-modules:

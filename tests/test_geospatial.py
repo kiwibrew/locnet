@@ -5,12 +5,12 @@ from tempfile import TemporaryDirectory
 
 import httpx
 
-from library.classes import LocationData
-from library.geospatial import (
+from app.schemas.modeling import LocationData
+from app.services.geospatial import (
     GeospatialClient,
     calculate_coverage_population,
 )
-from library.geojson_cache import GeoJSONCache
+from app.services.geojson_cache import GeoJSONCache
 
 
 def geojson(visible_area_sq_km):

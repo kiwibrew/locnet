@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: docker compose build test
+      - run: docker compose run --rm test pytest
+
+  spa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: docker compose run --rm spa npm ci
+      - run: docker compose run --rm spa npm test
+
+  playwright:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: docker compose build test
+      - run: docker compose run --rm --no-deps playwright npm ci
+      - run: docker compose run --rm playwright npm test
+      - if: always()
+        run: docker compose down --volumes

@@ -35,7 +35,7 @@ export const useLoadBuilderInput = () => {
       type FormPath = Param2[string];
 
       const formPathForTechnologies: LocNetFormPath =
-        'nodes.2.children.0.children.1.children.0';
+        'nodes.1.children.0.children.1.children.0';
       const technologies = get(useFormStore.getState(), formPathForTechnologies);
       if (!technologies || technologies.type !== 'Technologies') {
         throw Error('Unable to find technologies node');
@@ -54,7 +54,7 @@ export const useLoadBuilderInput = () => {
       await sleepPromise(1000)
 
       const formPathForNetworkElements: LocNetFormPath =
-        'nodes.2.children.0.children.6.children.0';
+        'nodes.1.children.0.children.6.children.0';
       const networkElements = get(useFormStore.getState(), formPathForNetworkElements);
       if (!networkElements || networkElements.type !== 'NetworkElements') {
         console.error(

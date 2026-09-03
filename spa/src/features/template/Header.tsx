@@ -45,7 +45,7 @@ export const Header = () => {
           ) : null}
           {currentUser.is_admin ? (
             <li>
-              <a href="http://127.0.0.1:8000/manage-users">Admin Panel</a>
+              <a href="/manage-users">Admin Panel</a>
             </li>
           ) : null}
           <li>

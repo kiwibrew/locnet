@@ -38,15 +38,26 @@ class DatabaseRepositoryTests(unittest.IsolatedAsyncioTestCase):
                         annual_no_sun_days NUMERIC,
                         avg_temp NUMERIC,
                         min_temp NUMERIC,
-                        max_temp NUMERIC
+                        max_temp NUMERIC,
+                        sun_jan REAL,
+                        sun_feb REAL,
+                        sun_mar REAL,
+                        sun_apr REAL,
+                        sun_may REAL,
+                        sun_jun REAL,
+                        sun_jul REAL,
+                        sun_aug REAL,
+                        sun_sep REAL,
+                        sun_oct REAL,
+                        sun_nov REAL,
+                        sun_dec REAL
                     )
                     """
                 )
             )
             await connection.execute(
                 text(
-                    "INSERT INTO Countries (name, iso_3) "
-                    "VALUES ('New Zealand', 'NZL')"
+                    "INSERT INTO Countries (name, iso_3) VALUES ('New Zealand', 'NZL')"
                 )
             )
 
@@ -64,8 +75,8 @@ class DatabaseRepositoryTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(countries, {"New Zealand": "NZL"})
 
-    async def test_writes_solar_cache_in_the_request_transaction(self) -> None:
-        await self.repository.store_solar_cache(
+    async def test_inserts_solar_cache_in_the_request_transaction(self) -> None:
+        await self.repository.upsert_solar_cache(
             -41.29,
             174.78,
             {
@@ -75,6 +86,18 @@ class DatabaseRepositoryTests(unittest.IsolatedAsyncioTestCase):
                 "avg_temp": 13.0,
                 "min_temp": 5.0,
                 "max_temp": 22.0,
+                "sun_jan": 4.1,
+                "sun_feb": 4.2,
+                "sun_mar": 4.3,
+                "sun_apr": 4.4,
+                "sun_may": 4.5,
+                "sun_jun": 4.6,
+                "sun_jul": 4.7,
+                "sun_aug": 4.8,
+                "sun_sep": 4.9,
+                "sun_oct": 5.0,
+                "sun_nov": 5.1,
+                "sun_dec": 5.2,
             },
         )
 
@@ -84,6 +107,36 @@ class DatabaseRepositoryTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(rows), 1)
         self.assertEqual(float(rows[0]["latitude"]), -41.29)
         self.assertEqual(float(rows[0]["longitude"]), 174.78)
+
+    async def test_updates_existing_solar_cache_records(self) -> None:
+        solar_stats = {
+            "min_sun": 2.5,
+            "max_no_sun_days": 3.0,
+            "annual_no_sun_days": 25.0,
+            "avg_temp": 13.0,
+            "min_temp": 5.0,
+            "max_temp": 22.0,
+            "sun_jan": 4.1,
+            "sun_feb": 4.2,
+            "sun_mar": 4.3,
+            "sun_apr": 4.4,
+            "sun_may": 4.5,
+            "sun_jun": 4.6,
+            "sun_jul": 4.7,
+            "sun_aug": 4.8,
+            "sun_sep": 4.9,
+            "sun_oct": 5.0,
+            "sun_nov": 5.1,
+            "sun_dec": 5.2,
+        }
+        await self.repository.upsert_solar_cache(-41.29, 174.78, solar_stats)
+        updated_stats = {**solar_stats, "sun_dec": 0.0}
+        await self.repository.upsert_solar_cache(-41.29, 174.78, updated_stats)
+
+        rows = await self.repository.get_solar_cache_records(-41.29, 174.78)
+
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(float(rows[0]["sun_dec"]), 0.0)
 
 
 if __name__ == "__main__":

@@ -30,19 +30,22 @@ The model uses the electrical load calculated for the location, the selected sys
 
 ### Location-specific solar and climate data
 
-Climate inputs are location-specific. The model rounds the latitude and longitude supplied for a location to two decimal places and looks for a complete record for that coordinate pair in the `Solar_cache` table. A valid cache record contains minimum solar resource, maximum and annual no-sun days, and average, minimum, and maximum temperatures. The older country-centroid `SolarStats` lookup is no longer used by the Power Model.
+Climate inputs are location-specific. The model rounds latitude and longitude to two decimal places. It then reads the matching record from the SQLite `Solar_cache` table. The cache stores the solar and climate statistics plus `sun_jan` through `sun_dec`. These fields contain NASA's monthly `SI_TILTED_AVG_LATITUDE` values in kWh/m²/day.
 
-When there is no complete cache record, the application requests a point climatology from NASA's Prediction Of Worldwide Energy Resources (POWER) service, then stores the derived result for future requests at the same rounded coordinates. POWER provides long-term climatological data, rather than a short-term weather forecast. Its current documentation, data descriptions, and API guidance are available in the [NASA POWER documentation](https://power.larc.nasa.gov/docs/).
+If the cache cannot supply the required values, the application requests a point climatology from NASA's Prediction Of Worldwide Energy Resources (POWER) service. It stores the result for later use at the same rounded coordinates. POWER supplies long-term climate data, not a short-term weather forecast. Read the [NASA POWER documentation](https://power.larc.nasa.gov/docs/) for data definitions and API guidance.
 
-The application requests the POWER temporal-climatology point data for tilted-surface solar irradiance, equivalent no-sun days, and temperature at 2 metres (`T2M`). It derives the values used by the model as follows:
+The application requests tilted-surface solar irradiance, equivalent no-sun days, and temperature at two meters (`T2M`). It uses these values as follows:
 
-- **Minimum daily solar resource (`min_sun`)** is the lowest valid monthly value in POWER's latitude-tilted surface irradiance series, `SI_TILTED_AVG_LATITUDE`. This is deliberately conservative: solar array sizing uses the least productive month.
-- **Maximum no-sun days (`max_no_sun_days`)** is the largest monthly value in `EQUIV_NO_SUN_CONSEC_07`. It represents the worst equivalent no-sun period in a seven-day window in the climatology.
-- **Annual no-sun days (`annual_no_sun_days`)** is a conservative estimate for hybrid systems. The model multiplies each monthly `EQUIV_NO_SUN_CONSEC_07` value by 4.3 and sums the twelve products.
-- **Average temperature (`avg_temp`)** comes from `T2M`'s annual (`ANN`) value. If that value is POWER's missing-data marker (`-999`), the model averages the valid monthly temperatures only when at least ten months are available.
-- **Minimum and maximum temperature** are the lowest and highest valid monthly `T2M` values. The minimum is used for battery cold derating; the other values are retained in the cache for a complete climate record.
+- **Monthly solar resource** comes from `SI_TILTED_AVG_LATITUDE`. A value of zero is valid. It means that the location receives no usable solar energy in that month.
+- **Minimum solar resource (`min_sun`)** is the lowest valid monthly solar value. The off-grid solar model uses it for panel sizing.
+- **Maximum no-sun days (`max_no_sun_days`)** is the highest monthly `EQUIV_NO_SUN_CONSEC_07` value.
+- **Annual no-sun days (`annual_no_sun_days`)** is the sum of each monthly no-sun value multiplied by 4.3. The off-grid solar model uses the maximum no-sun value. The hybrid model does not use either no-sun value for its energy cost.
+- **Average temperature (`avg_temp`)** comes from the annual `T2M` value. If NASA gives `-999`, the model averages at least ten valid monthly values.
+- **Minimum and maximum temperature** come from the valid monthly `T2M` values. The minimum temperature sets the battery cold derating.
 
-POWER's `-999` fill values and malformed or incomplete responses are not used. If the service cannot provide enough valid data, the application/API returns a 502 response with the detail: `The NSAS POWER service returned incomplete or invalid data.`
+NASA uses `-999` as a missing-data marker. Reliable and intermittent mains systems need valid temperature data, but do not need solar or no-sun data. They can continue with `-999` in the solar diagnostic fields. Solar systems need usable solar and no-sun data. If that data is unavailable, the model returns an error that says Solar power is not supported at that location. Hybrid systems need twelve valid monthly solar values and at least one positive value. They can continue without no-sun data. If every monthly solar value is zero, the model returns an error that says Hybrid power is not supported at that location.
+
+If NASA cannot supply the data that a selected system needs, the application/API returns a 502 response with the detail: `The NSAS POWER service returned incomplete or invalid data.`
 
 ### Power-system options
 
@@ -50,22 +53,24 @@ POWER's `-999` fill values and malformed or incomplete responses are not used. I
 | --- | --- | --- |
 | **Reliable mains** | The configurable reliable-power outage duration (`power_reliable_hours`) | Assumes mains energy is used throughout the system life. |
 | **Intermittent mains** | The configurable intermittent-power outage duration (`power_intermittent_hours`) | Assumes mains energy is used throughout the system life, with battery capacity covering the configured outages. |
-| **Hybrid solar and mains** | The configurable hybrid autonomy duration (`power_hybrid_hours`) | Adds solar generation and uses annual no-sun days to estimate the days on which mains power is needed. |
+| **Hybrid solar and mains** | The configurable hybrid autonomy duration (`power_hybrid_hours`) | Uses monthly solar generation and mains power for the remaining energy demand. |
 | **Off-grid solar** | `max_no_sun_days × 24` hours | Uses no mains installation or mains-energy OpEx. |
 
-Reliable and intermittent mains systems include a battery to cover their configured outage period, a charger/inverter, the mains installation cost, and lifetime mains electricity. Hybrid systems combine solar, batteries, a charger/inverter, and a mains connection. The solar array is sized from the worst monthly solar resource, while annual no-sun days determine the modelled lifetime mains-energy cost. Off-grid solar systems size battery autonomy for the worst no-sun period and have no mains-energy cost.
+Reliable and intermittent mains systems include a battery to cover their configured outage period, a charger/inverter, the mains installation cost, and lifetime mains electricity. Hybrid systems combine solar, batteries, a charger/inverter, and a mains connection. They use solar energy where it is available and mains energy for the remaining demand. Off-grid solar systems size battery autonomy for the worst no-sun period and have no mains-energy cost.
 
 ### Battery, solar, and charger assumptions
 
 For systems with a battery, the model starts with the location's electrical load, the applicable autonomy period, and the configured depth of discharge. It then increases the requirement for battery-age derating over the full system life and applies a temperature-based cold derating using the location's coldest valid monthly `T2M` value. Lithium-ion batteries lose usable capacity as they age, and cold temperatures reduce the energy they can store, so both adjustments increase the installed battery capacity required to meet the same load.
 
-For solar and hybrid systems, the model sizes panel area from the required daily energy and the worst monthly solar resource. It applies the configured panel efficiency and solar derating over the system life. Panel generation capacity is calculated using a peak irradiance assumption of 1,350 watts per square metre, and panel cost is based on the configured local cost per watt. Charger/inverter cost consists of a base cost plus a variable cost: it scales with load for mains systems and with calculated solar-panel capacity for solar and hybrid systems.
+For solar and hybrid systems, the model sizes panel area from the required daily energy and solar resource. Hybrid sizing uses the lowest positive monthly solar value and final-year panel output. It applies the configured panel efficiency and solar derating over the system life. For every month and system year, the hybrid model calculates the solar energy from the fixed panel area. It limits solar use to the location's daily energy demand and charges mains power for the remaining energy. It gives no credit for excess solar energy.
 
-The model reports the calculated battery, charger/inverter, and solar cost components as well as the CapEx and OpEx results. In the current implementation, off-grid `power_capex` includes the calculated solar cost. For hybrid systems, `solar_cost` is calculated and reported separately, while `power_capex` currently includes battery, charger/inverter, and mains-installation costs; account for the separate solar component when interpreting a hybrid total.
+Panel generation capacity uses a peak irradiance assumption of 1,350 watts per square metre. Panel cost uses the configured local cost per watt. Charger/inverter cost consists of a base cost plus a variable cost. It scales with load for mains systems and with calculated solar-panel capacity for solar and hybrid systems.
+
+The model reports the battery, charger/inverter, and solar cost components with the CapEx and OpEx results. Off-grid and hybrid `power_capex` values include the calculated solar cost.
 
 ### Important limitations
 
-This is a planning model, not a detailed electrical-system design. It uses long-term monthly climatology and conservative worst-month/worst-period assumptions. It does not model local shading, terrain effects on irradiation, daily battery cycling, panel orientation and soiling, or seasonal operation in intermittent supply situations. These factors can materially change the best design, particularly at high and low latitudes. Use a site survey, local energy data, and a detailed engineering design before procurement or construction.
+This is a planning model, not a detailed electrical-system design. It uses long-term monthly climate data. It does not model local shading, terrain effects on irradiation, daily battery cycling, panel orientation, soiling, solar export, or intraday battery dispatch. These factors can materially change the best design, particularly at high and low latitudes. Use a site survey, local energy data, and a detailed engineering design before procurement or construction.
 
 ## My model doesn't cover as many people as I expect it should, why is that?
 
